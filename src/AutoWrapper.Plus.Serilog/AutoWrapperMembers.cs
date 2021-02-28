@@ -4,7 +4,6 @@ using AutoWrapper.Wrappers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -13,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Serilog;
 using static Microsoft.AspNetCore.Http.StatusCodes;
 
 namespace AutoWrapper
@@ -21,12 +21,12 @@ namespace AutoWrapper
     {
 
         private readonly AutoWrapperOptions _options;
-        private readonly ILogger<AutoWrapperMiddleware> _logger;
+        private readonly ILogger _logger;
         private readonly JsonSerializerSettings _jsonSettings;
         public readonly Dictionary<string, string> _propertyMappings;
         private readonly bool _hasSchemaForMappping;
         public AutoWrapperMembers(AutoWrapperOptions options, 
-                                    ILogger<AutoWrapperMiddleware> logger, 
+                                    ILogger logger, 
                                     JsonSerializerSettings jsonSettings,
                                     Dictionary<string, string> propertyMappings = null, 
                                     bool hasSchemaForMappping = false)
@@ -125,13 +125,7 @@ namespace AutoWrapper
                 apiError = new ApiError(exceptionMessage) { Details = stackTrace };
                 httpStatusCode = Status500InternalServerError;
             }
-
-
-            if (_options.EnableExceptionLogging) {
-                var errorMessage = apiError is ApiError ? ((ApiError)apiError).ExceptionMessage : ResponseMessage.Exception;
-                _logger.Log(LogLevel.Error, exception, $"[{httpStatusCode}]: { errorMessage }");
-            }
-
+            
             var jsonString = ConvertToJSONString(GetErrorResponse(httpStatusCode, apiError));
 
             await WriteFormattedResponseToHttpContextAsync(context, httpStatusCode, jsonString);
@@ -235,11 +229,6 @@ namespace AutoWrapper
         public async Task HandleProblemDetailsExceptionAsync(HttpContext context, IActionResultExecutor<ObjectResult> executor, object body, Exception exception = null)
         {
             await new ApiProblemDetailsMember().WriteProblemDetailsAsync(context, executor, body, exception, _options.IsDebug);
-
-            if (_options.EnableExceptionLogging && exception != null)
-            {
-                _logger.Log(LogLevel.Error, exception, $"[{context.Response.StatusCode}]: { exception.GetBaseException().Message }");
-            }
         }
 
         public bool IsRequestSuccessful(int statusCode)

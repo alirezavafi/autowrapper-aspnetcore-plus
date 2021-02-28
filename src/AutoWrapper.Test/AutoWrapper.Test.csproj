@@ -13,10 +13,6 @@
 		<PackageReference Include="coverlet.collector" Version="1.2.0" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\..\src\AutoWrapper\AutoWrapper.csproj" />
-	</ItemGroup>
-
 	<ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 		<PackageReference Include="Microsoft.AspNetCore.TestHost">
@@ -29,6 +25,10 @@
 		<PackageReference Include="Microsoft.AspNetCore.TestHost">
 			<Version>3.0.3</Version>
 		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\AutoWrapper.Plus.Serilog\AutoWrapper.Plus.Serilog.csproj" />
 	</ItemGroup>
 
 </Project>

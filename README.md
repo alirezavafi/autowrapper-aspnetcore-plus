@@ -1,34 +1,20 @@
 <img align="right" src="/src/AutoWrapper/logo.png" />
 
-# AutoWrapper  [![Nuget](https://img.shields.io/nuget/v/AutoWrapper.Core?color=blue)](https://www.nuget.org/packages/AutoWrapper.Core) [![Nuget downloads](https://img.shields.io/nuget/dt/AutoWrapper.Core?color=green)](https://www.nuget.org/packages/AutoWrapper.Core) ![.NET Core](https://github.com/proudmonkey/AutoWrapper/workflows/.NET%20Core/badge.svg)
+# AutoWrapper.Plus.Serilog  [![Nuget](https://img.shields.io/nuget/v/AutoWrapper.Core.Plus.Serilog?color=blue)](https://www.nuget.org/packages/AutoWrapper.Core) 
 
-Language: English | [中文](README.zh-cn.md)  
-
-`AutoWrapper` is a simple, yet customizable global `HTTP` exception handler and response wrapper for ASP.NET Core APIs. It uses an ASP.NET Core `middleware` to intercept incoming `HTTP` requests and automatically wraps the responses for you by providing a consistent response format for both successful and error results. The goal is to let you focus on your business code specific requirements and let the wrapper automatically handle the `HTTP` response. This can speedup the development time when building your APIs while enforcing own standards for your `HTTP` responses.
-
-#### Main features:
-
-* Exception handling.
-* `ModelState` validation error handling (support both `Data Annotation` and `FluentValidation`).
-* A configurable `API` exception.
-* A consistent response format for `Result` and `Errors`.
-* A detailed `Result` response.
-* A detailed `Error` response.
-* A configurable `HTTP` `StatusCodes` and messages.
-* Add support for `Swagger`.
-* Add Logging support for `Request`, `Response` and `Exceptions`.
-* A configurable middleware `options` to configure the wrapper. See **Options** section below for details.
-* Enable property name mappings for the default `ApiResponse` properties.
-* Add support for implementing your own user-defined `Response` and `Error` schema / object.
-* Add support for Problem Details exception format.
-* Add support for ignoring action methods that don't need to be wrapped using `[AutoWrapIgnore]` filter attribute.
-* V3.x enable backwards compatibility support for `netcoreapp2.1` and `netcoreapp2.2` .NET Core frameworks.
+A modified version of AutoWrapper.Core with following changes:
+- Structured Logging using Serilog
+- Log Request and Response bodies in structured format
+  (LogResponseDataOnException and ShouldLogResponseData options added)
+- Log All Requests
+- Attach exceptions on request logs (removed separate log entry for exceptions)
+- Log level based on response Status Code (Information=200, Warning>=400, Error>=500)
 
 # Installation
 1. Download and Install the latest `AutoWrapper.Core` from NuGet or via CLI:
 
 ```
-PM> Install-Package AutoWrapper.Core -Version 4.3.0
+PM> Install-Package AutoWrapper.Core.Plus.Serilog -Version 4.4.0
 ```
 
 2. Declare the following namespace within `Startup.cs`

@@ -16,6 +16,6 @@
         internal const string NotApiOnly = @"HTML detected in the response body.
 If you are combining API Controllers within your front-end projects like Angular, MVC, React, Blazor and other SPA frameworks that supports .NET Core, then set the AutoWrapperOptions IsApiOnly property to false. 
 If you are using pure API and want to output HTML as part of your JSON object, then set BypassHTMLValidation property to true.";
-        internal const string NoMappingFound = "You must apply the [AutoWrapperPropertyMap] Attribute to map through the default ApiResponse properties. If you want to to define your own custom response,  set UseCustomSchema = true in the AutoWrapper options.";
+        internal const string NoMappingFound = "You must apply the [AutoWrapperPropertyMap] Attribute to map through the default ApiResponse properties. If you want to to define your own custom response,  set UseCustomSchema = true in the AutoWrapper.Plus.Serilog options.";
     }
 }
