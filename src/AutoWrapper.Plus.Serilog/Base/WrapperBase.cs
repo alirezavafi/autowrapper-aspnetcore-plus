@@ -46,7 +46,7 @@ namespace AutoWrapper.Base
                 Exception ex = null;
                 var originalResponseBodyStream = context.Response.Body;
                 bool isRequestOk = false;
-
+                string responseBodyAsText = null;
                 using var memoryStream = new MemoryStream();
 
                 try
@@ -57,7 +57,7 @@ namespace AutoWrapper.Base
                     isRequestOk = awm.IsRequestSuccessful(context.Response.StatusCode);
                     if (context.Response.HasStarted)
                     {
-                        LogResponseHasStartedError(context, requestBody, stopWatch, isRequestOk, ex);
+                        LogResponseHasStartedError(context, requestBody, responseBodyAsText, stopWatch, isRequestOk, ex);
                         return;
                     }
 
@@ -68,14 +68,14 @@ namespace AutoWrapper.Base
                         return;
                     }
 
-                    var bodyAsText = await awm.ReadResponseBodyStreamAsync(memoryStream);
+                    responseBodyAsText = await awm.ReadResponseBodyStreamAsync(memoryStream);
                     context.Response.Body = originalResponseBodyStream;
 
                     if (context.Response.StatusCode != Status304NotModified &&
                         context.Response.StatusCode != Status204NoContent)
                     {
                         if (!_options.IsApiOnly
-                            && (bodyAsText.IsHtml()
+                            && (responseBodyAsText.IsHtml()
                                 && !_options.BypassHTMLValidation)
                             && context.Response.StatusCode == Status200OK)
                         {
@@ -83,7 +83,7 @@ namespace AutoWrapper.Base
                         }
 
                         if (!context.Request.Path.StartsWithSegments(new PathString(_options.WrapWhenApiPathStartsWith))
-                            && (bodyAsText.IsHtml()
+                            && (responseBodyAsText.IsHtml()
                                 && !_options.BypassHTMLValidation)
                             && context.Response.StatusCode == Status200OK)
                         {
@@ -100,11 +100,11 @@ namespace AutoWrapper.Base
                         {
                             if (_options.IgnoreWrapForOkRequests)
                             {
-                                await awm.WrapIgnoreAsync(context, bodyAsText);
+                                await awm.WrapIgnoreAsync(context, responseBodyAsText);
                             }
                             else
                             {
-                                await awm.HandleSuccessfulRequestAsync(context, bodyAsText,
+                                await awm.HandleSuccessfulRequestAsync(context, responseBodyAsText,
                                     context.Response.StatusCode);
                             }
                         }
@@ -112,11 +112,12 @@ namespace AutoWrapper.Base
                         {
                             if (_options.UseApiProblemDetailsException)
                             {
-                                await awm.HandleProblemDetailsExceptionAsync(context, _executor, bodyAsText);
+                                await awm.HandleProblemDetailsExceptionAsync(context, _executor, responseBodyAsText);
                                 return;
                             }
 
-                            await awm.HandleUnsuccessfulRequestAsync(context, bodyAsText, context.Response.StatusCode);
+                            await awm.HandleUnsuccessfulRequestAsync(context, responseBodyAsText,
+                                context.Response.StatusCode);
                         }
                     }
                 }
@@ -125,7 +126,8 @@ namespace AutoWrapper.Base
                     ex = exception;
                     if (context.Response.HasStarted)
                     {
-                        LogResponseHasStartedError(context, requestBody, stopWatch, isRequestOk, ex);
+                        LogResponseHasStartedError(context, requestBody, responseBodyAsText, stopWatch, isRequestOk,
+                            ex);
                         return;
                     }
 
@@ -142,7 +144,7 @@ namespace AutoWrapper.Base
                 }
                 finally
                 {
-                    LogHttpRequest(context, requestBody, stopWatch, isRequestOk, ex);
+                    LogHttpRequest(context, requestBody, responseBodyAsText, stopWatch, isRequestOk, ex);
                 }
             }
         }
@@ -170,20 +172,25 @@ namespace AutoWrapper.Base
         }
 
 
-        private void LogHttpRequest(HttpContext context, string requestBody, Stopwatch stopWatch, bool isRequestOk, Exception ex)
+        private void LogHttpRequest(HttpContext context, string requestBody, string responseBody, Stopwatch stopWatch,
+            bool isRequestOk,
+            Exception ex)
         {
             stopWatch.Stop();
             if (_options.EnableResponseLogging || (!isRequestOk && _options.EnableExceptionLogging))
             {
                 bool shouldLogRequestData = ShouldLogRequestData(context);
                 JsonDocument requestBodyObject = null;
-                if ((shouldLogRequestData || (!isRequestOk && _options.LogResponseDataOnException)) && !string.IsNullOrWhiteSpace(requestBody))
+                if ((shouldLogRequestData || (!isRequestOk && _options.LogResponseDataOnException)) &&
+                    !string.IsNullOrWhiteSpace(requestBody))
                 {
                     try
                     {
                         requestBodyObject = System.Text.Json.JsonDocument.Parse(requestBody);
                     }
-                    catch (Exception e) { }
+                    catch (Exception e)
+                    {
+                    }
                 }
                 else
                 {
@@ -192,42 +199,35 @@ namespace AutoWrapper.Base
 
                 var requestData = new
                 {
-                    ClientIp = context.Connection.RemoteIpAddress,
-                    context.Request.Method,
-                    context.Request.Scheme,
-                    context.Request.Host,
-                    context.Request.Path,
-                    context.Request.QueryString,
+                    ClientIp = context.Connection.RemoteIpAddress.ToString(),
+                    Method = context.Request.Method,
+                    Scheme = context.Request.Scheme,
+                    Host = context.Request.Host.Value,
+                    Path = context.Request.Path.Value,
+                    QueryString = context.Request.QueryString.Value,
                     context.Request.Query,
                     BodyString = requestBody,
                     Body = requestBodyObject
                 };
-                
-                
+
+
                 bool shouldLogResponseData = ShouldLogResponseData(context);
-                string responseBody = null;
                 object responseBodyObject = null;
                 if ((shouldLogResponseData || (!isRequestOk && _options.LogResponseDataOnException)))
                 {
-                    var responseBodyStream = context.Response.Body;
-                    if (responseBodyStream != null)
+                    try
                     {
-                        responseBodyStream.Seek(0, SeekOrigin.Begin);
-                        responseBody = Task.Run(() => new StreamReader(responseBodyStream).ReadToEndAsync()).Result;
-                        responseBodyStream.Seek(0, SeekOrigin.Begin);
-
-                        var (IsEncoded, ParsedText) = responseBody.VerifyBodyContent();
-                        if (IsEncoded)
-                        {
-                            responseBody = ParsedText;
-                        }
-                        try
-                        {
-                            responseBodyObject = System.Text.Json.JsonDocument.Parse(responseBody);
-                        }
-                        catch (Exception e) { }
+                        responseBodyObject = System.Text.Json.JsonDocument.Parse(responseBody);
+                    }
+                    catch (Exception e)
+                    {
                     }
                 }
+                else
+                {
+                    responseBody = null;
+                }
+
                 var responseData = new
                 {
                     context.Response.StatusCode,
@@ -246,26 +246,25 @@ namespace AutoWrapper.Base
                     level = LogEventLevel.Warning;
                 }
 
-                using (LogContext.PushProperty("HttpRequest", requestData, true))
-                using (LogContext.PushProperty("HttpResponse", responseData, true))
+                _logger.Write(level, ex, DefaultRequestCompletionMessageTemplate, new
                 {
-                    _logger.Write(level, ex, DefaultRequestCompletionMessageTemplate, new
-                    {
-                        Request = requestBody,
-                        Response = responseBody,
-                    });
-                }
+                    Request = requestData,
+                    Response = responseData,
+                });
             }
         }
-        
+
         const string DefaultRequestCompletionMessageTemplate =
             "HTTP Request Completed {@Context}";
 
-        
-        private void LogResponseHasStartedError(HttpContext context, string requestBody, Stopwatch stopWatch, bool isRequestOk, Exception ex)
+
+        private void LogResponseHasStartedError(HttpContext context, string requestBody, string responseStream,
+            Stopwatch stopWatch,
+            bool isRequestOk, Exception ex)
         {
-            _logger.Warning("The response has already started, the AutoWrapper.Plus.Serilog middleware will not be executed.");
-            LogHttpRequest(context, requestBody, stopWatch, isRequestOk, ex);
+            _logger.Warning(
+                "The response has already started, the AutoWrapper.Plus.Serilog middleware will not be executed.");
+            LogHttpRequest(context, requestBody, responseStream, stopWatch, isRequestOk, ex);
         }
     }
 }
