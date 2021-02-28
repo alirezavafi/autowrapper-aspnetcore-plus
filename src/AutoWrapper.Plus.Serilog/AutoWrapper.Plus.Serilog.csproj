@@ -17,6 +17,7 @@
     <PackageIcon>icon.png</PackageIcon>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <RootNamespace>AutoWrapper</RootNamespace>
+    <PackageVersion>4.4.0-alpha</PackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
