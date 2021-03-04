@@ -11,6 +11,7 @@ A modified version of AutoWrapper.Core with following changes:
 - Log level based on response Status Code (Information=200, Warning>=400, Error>=500)
 - Masking sensitive information
 - Allow request/response size limit on capturing data
+- Allow dedicated logger for separating AutoWrapper logs
 
 # Sample Log Entry
 

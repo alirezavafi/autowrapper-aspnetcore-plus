@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Core;
+using Serilog.Formatting.Compact;
 
 namespace AutoWrapper.Samples.AspNetCore.DedicatedRequestResponseLogOutput
 {
@@ -43,13 +44,19 @@ namespace AutoWrapper.Samples.AspNetCore.DedicatedRequestResponseLogOutput
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
+            var autoWrapperLogger = new LoggerConfiguration()
+                .SetSerilogPlusDefaultConfiguration()
+                .WriteTo.File(new RenderedCompactJsonFormatter(),"App_Data/Logs/log_autowrapper.json")
+                .CreateLogger();
+            
             app.UseApiResponseAndExceptionWrapper(new AutoWrapperOptions()
             {
                 EnableExceptionLogging = true,
                 EnableResponseLogging = true,
                 ShouldLogRequestData = true,
                 ShouldLogResponseData = true,
-                UseApiProblemDetailsException = true
+                UseApiProblemDetailsException = true,
+                Logger = autoWrapperLogger,
             });
             
             app.UseRouting();

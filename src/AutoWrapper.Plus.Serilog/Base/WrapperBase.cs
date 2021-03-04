@@ -11,6 +11,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using AutoWrapper.Filters;
 using Microsoft.Extensions.Logging;
+using Serilog;
 using Serilog.Context;
 using Serilog.Events;
 using static Microsoft.AspNetCore.Http.StatusCodes;
@@ -27,12 +28,11 @@ namespace AutoWrapper.Base
 
         public WrapperBase(RequestDelegate next,
             AutoWrapperOptions options,
-            ILogger logger,
             IActionResultExecutor<ObjectResult> executor)
         {
             _next = next;
             _options = options;
-            _logger = logger;
+            _logger =  options.Logger ?? Log.ForContext<WrapperBase>();
             _executor = executor;
         }
 

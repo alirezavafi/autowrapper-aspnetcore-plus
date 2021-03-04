@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using AutoWrapper.Base;
 using Newtonsoft.Json;
+using Serilog;
 
 namespace AutoWrapper
 {
@@ -22,5 +23,6 @@ namespace AutoWrapper
         public string MaskFormat { get; set; } = "*** MASKED ***";
         public int ResponseBodyTextLengthLogLimit { get; set; } = 4000;
         public int RequestBodyTextLengthLogLimit { get; set; } = 4000;
+        public ILogger Logger { get; set; }
     }
 }

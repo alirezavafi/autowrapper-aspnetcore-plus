@@ -21,18 +21,15 @@ namespace AutoWrapper
     {
 
         private readonly AutoWrapperOptions _options;
-        private readonly ILogger _logger;
         private readonly JsonSerializerSettings _jsonSettings;
         public readonly Dictionary<string, string> _propertyMappings;
         private readonly bool _hasSchemaForMappping;
         public AutoWrapperMembers(AutoWrapperOptions options, 
-                                    ILogger logger, 
                                     JsonSerializerSettings jsonSettings,
                                     Dictionary<string, string> propertyMappings = null, 
                                     bool hasSchemaForMappping = false)
         {
             _options = options;
-            _logger = logger;
             _jsonSettings = jsonSettings;
             _propertyMappings = propertyMappings;
             _hasSchemaForMappping = hasSchemaForMappping;
