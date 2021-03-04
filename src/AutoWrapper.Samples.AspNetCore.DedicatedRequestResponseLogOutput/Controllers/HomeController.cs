@@ -4,7 +4,7 @@ using System.Linq;
 using AutoWrapper.Wrappers;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AutoWrapper.Sample.AspNetCore.Controllers
+namespace AutoWrapper.Samples.AspNetCore.DedicatedRequestResponseLogOutput.Controllers
 {
     [ApiController]
     [Route("[controller]")]

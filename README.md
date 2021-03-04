@@ -9,7 +9,79 @@ A modified version of AutoWrapper.Core with following changes:
 - Log All Requests
 - Attach exceptions on request logs (removed separate log entry for exceptions)
 - Log level based on response Status Code (Information=200, Warning>=400, Error>=500)
+- Masking sensitive information
+- Allow request/response size limit on capturing data
 
+# Sample Log Entry
+
+```json
+{
+    "@t": "2021-03-04T21:01:36.3305267Z",
+    "@m": "HTTP Request Completed { Request: { ClientIp: \"127.0.0.1\", Method: \"GET\", Scheme: \"https\", Host: \"localhost:5001\", Path: \"/home/list\", QueryString: \"\", Query: [], BodyString: null, Body: null }, Response: { StatusCode: 200, ElapsedMilliseconds: 1110, BodyString: \"[\r\n  {\r\n    \\\"date\\\": \\\"2021-03-06T00:31:35.3561032+03:30\\\",\r\n    \\\"passwordNumber\\\": \\\"*** MASKED ***\\\",\r\n    \\\"temperatureF\\\": 109,\r\n    \\\"token\\\": \\\"*** MASKED ***\\\",\r\n    \\\"summary\\\": \\\"Hot\\\"\r\n  },\r\n  {\r\n    \\\"date\\\": \\\"2021-03-07T00:31:35.3567648+03:30\\\",\r\n    \\\"passwordNumber\\\": \\\"*** MASKED ***\\\",\r\n    \\\"temperatureF\\\": 121,\r\n    \\\"token\\\": \\\"*** MASKED ***\\\",\r\n    \\\"summary\\\": \\\"Chilly\\\"\r\n  },\r\n  {\r\n    \\\"date\\\": \\\"2021-03-08T00:31:35.3567697+03:30\\\",\r\n    \\\"passwordNumber\\\": \\\"*** MASKED ***\\\",\r\n    \\\"temperatureF\\\": 29,\r\n    \\\"token\\\": \\\"*** MASKED ***\\\",\r\n    \\\"summary\\\": \\\"Hot\\\"\r\n  },\r\n  {\r\n    \\\"date\\\": \\\"2021-03-09T00:31:35.3567715+03:30\\\",\r\n    \\\"passwordNumber\\\": \\\"*** MASKED ***\\\",\r\n    \\\"temperatureF\\\": 7,\r\n    \\\"token\\\": \\\"*** MASKED ***\\\",\r\n    \\\"summary\\\": \\\"Scorching\\\"\r\n  },\r\n  {\r\n    \\\"date\\\": \\\"2021-03-10T00:31:35.3567728+03:30\\\",\r\n    \\\"passwordNumber\\\": \\\"*** MASKED ***\\\",\r\n    \\\"temperatureF\\\": 73,\r\n    \\\"token\\\": \\\"*** MASKED ***\\\",\r\n    \\\"summary\\\": \\\"Chilly\\\"\r\n  }\r\n]\", Body: [{ date: \"2021-03-06T00:31:35.3561032+03:30\", passwordNumber: \"*** MASKED ***\", temperatureF: 109, token: \"*** MASKED ***\", summary: \"Hot\" }, { date: \"2021-03-07T00:31:35.3567648+03:30\", passwordNumber: \"*** MASKED ***\", temperatureF: 121, token: \"*** MASKED ***\", summary: \"Chilly\" }, { date: \"2021-03-08T00:31:35.3567697+03:30\", passwordNumber: \"*** MASKED ***\", temperatureF: 29, token: \"*** MASKED ***\", summary: \"Hot\" }, { date: \"2021-03-09T00:31:35.3567715+03:30\", passwordNumber: \"*** MASKED ***\", temperatureF: 7, token: \"*** MASKED ***\", summary: \"Scorching\" }, { date: \"2021-03-10T00:31:35.3567728+03:30\", passwordNumber: \"*** MASKED ***\", temperatureF: 73, token: \"*** MASKED ***\", summary: \"Chilly\" }] } }",
+    "@i": "42abf3a2",
+    "Context": {
+        "Request": {
+            "ClientIp": "127.0.0.1",
+            "Method": "GET",
+            "Scheme": "https",
+            "Host": "localhost:5001",
+            "Path": "/home/list",
+            "QueryString": "",
+            "Query": [],
+            "BodyString": null,
+            "Body": null
+        },
+        "Response": {
+            "StatusCode": 200,
+            "ElapsedMilliseconds": 1110,
+            "BodyString": "[\r\n  {\r\n    \"date\": \"2021-03-06T00:31:35.3561032+03:30\",\r\n    \"passwordNumber\": \"*** MASKED ***\",\r\n    \"temperatureF\": 109,\r\n    \"token\": \"*** MASKED ***\",\r\n    \"summary\": \"Hot\"\r\n  },\r\n  {\r\n    \"date\": \"2021-03-07T00:31:35.3567648+03:30\",\r\n    \"passwordNumber\": \"*** MASKED ***\",\r\n    \"temperatureF\": 121,\r\n    \"token\": \"*** MASKED ***\",\r\n    \"summary\": \"Chilly\"\r\n  },\r\n  {\r\n    \"date\": \"2021-03-08T00:31:35.3567697+03:30\",\r\n    \"passwordNumber\": \"*** MASKED ***\",\r\n    \"temperatureF\": 29,\r\n    \"token\": \"*** MASKED ***\",\r\n    \"summary\": \"Hot\"\r\n  },\r\n  {\r\n    \"date\": \"2021-03-09T00:31:35.3567715+03:30\",\r\n    \"passwordNumber\": \"*** MASKED ***\",\r\n    \"temperatureF\": 7,\r\n    \"token\": \"*** MASKED ***\",\r\n    \"summary\": \"Scorching\"\r\n  },\r\n  {\r\n    \"date\": \"2021-03-10T00:31:35.3567728+03:30\",\r\n    \"passwordNumber\": \"*** MASKED ***\",\r\n    \"temperatureF\": 73,\r\n    \"token\": \"*** MASKED ***\",\r\n    \"summary\": \"Chilly\"\r\n  }\r\n]",
+            "Body": [
+                {
+                    "date": "2021-03-06T00:31:35.3561032+03:30",
+                    "passwordNumber": "*** MASKED ***",
+                    "temperatureF": 109,
+                    "token": "*** MASKED ***",
+                    "summary": "Hot"
+                },
+                {
+                    "date": "2021-03-07T00:31:35.3567648+03:30",
+                    "passwordNumber": "*** MASKED ***",
+                    "temperatureF": 121,
+                    "token": "*** MASKED ***",
+                    "summary": "Chilly"
+                },
+                {
+                    "date": "2021-03-08T00:31:35.3567697+03:30",
+                    "passwordNumber": "*** MASKED ***",
+                    "temperatureF": 29,
+                    "token": "*** MASKED ***",
+                    "summary": "Hot"
+                },
+                {
+                    "date": "2021-03-09T00:31:35.3567715+03:30",
+                    "passwordNumber": "*** MASKED ***",
+                    "temperatureF": 7,
+                    "token": "*** MASKED ***",
+                    "summary": "Scorching"
+                },
+                {
+                    "date": "2021-03-10T00:31:35.3567728+03:30",
+                    "passwordNumber": "*** MASKED ***",
+                    "temperatureF": 73,
+                    "token": "*** MASKED ***",
+                    "summary": "Chilly"
+                }
+            ]
+        }
+    },
+    "RequestId": "0HM6VA2OSU9N1:00000001",
+    "RequestPath": "/home/list",
+    "ConnectionId": "0HM6VA2OSU9N1",
+    "EnvironmentUserName": "DESKTOP\\Alireza",
+    "MachineName": "DESKTOP",
+    "EventId": "C2110DE4"
+}
+```
 # Installation
 1. Download and Install the latest `AutoWrapper.Core` from NuGet or via CLI:
 
