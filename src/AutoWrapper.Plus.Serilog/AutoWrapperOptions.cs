@@ -16,8 +16,12 @@ namespace AutoWrapper
         public bool IgnoreWrapForOkRequests { get; set; } = false;
         public bool LogRequestDataOnException { get; set; } = true;
         public bool LogResponseDataOnException { get; set; } = true;
+        public bool LogRequestHeaderOnException { get; set; } = true;
+        public bool LogResponseHeaderOnException { get; set; } = true;
         public bool ShouldLogRequestData { get; set; } = true;
         public bool ShouldLogResponseData { get; set; } = false;
+        public bool ShouldLogRequestHeader { get; set; } = true;
+        public bool ShouldLogResponseHeader { get; set; } = false;
         public IList<string> MaskedProperties { get; } =
             new List<string>() {"*password*", "*token*", "*clientsecret*", "*bearer*", "*authorization*", "*client-secret*","*otp"};
         public string MaskFormat { get; set; } = "*** MASKED ***";

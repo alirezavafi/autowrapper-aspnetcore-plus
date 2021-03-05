@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -11,6 +12,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using AutoWrapper.Filters;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
 using Serilog;
 using Serilog.Context;
 using Serilog.Events;
@@ -195,6 +197,18 @@ namespace AutoWrapper.Base
                 {
                     requestBody = null;
                 }
+                IEnumerable<object> requestHeader = null;
+                if (_options.ShouldLogRequestHeader ||
+                    (!isRequestOk && _options.LogRequestHeaderOnException))
+                {
+                    requestHeader =
+                        context.Request.Headers.Mask(_options.MaskedProperties.ToArray(), _options.MaskFormat)
+                            .Select(x => new
+                            {
+                                Name = x.Key,
+                                Value = x.Value.ToString()
+                            });
+                }
 
                 var requestData = new
                 {
@@ -204,9 +218,14 @@ namespace AutoWrapper.Base
                     Host = context.Request.Host.Value,
                     Path = context.Request.Path.Value,
                     QueryString = context.Request.QueryString.Value,
-                    context.Request.Query,
+                    Query = context.Request.Query.Select(x => new
+                    {
+                        Name = x.Key,
+                        Value = x.Value.ToString()
+                    }),
                     BodyString = requestBody,
-                    Body = requestBodyObject
+                    Body = requestBodyObject,
+                    Header = requestHeader,
                 };
 
 
@@ -224,6 +243,18 @@ namespace AutoWrapper.Base
                 {
                     responseBody = null;
                 }
+                IEnumerable<object> responseHeader = null;
+                if (_options.ShouldLogResponseHeader ||
+                    (!isRequestOk && _options.LogResponseHeaderOnException))
+                {
+                    responseHeader =
+                        context.Response.Headers.Mask(_options.MaskedProperties.ToArray(), _options.MaskFormat)
+                            .Select(x => new
+                            {
+                                Name = x.Key,
+                                Value = x.Value.ToString()
+                            });
+                }
 
                 var responseData = new
                 {
@@ -231,6 +262,7 @@ namespace AutoWrapper.Base
                     stopWatch.ElapsedMilliseconds,
                     BodyString = responseBody,
                     Body = responseBodyObject,
+                    Header = responseHeader
                 };
 
                 var level = LogEventLevel.Information;

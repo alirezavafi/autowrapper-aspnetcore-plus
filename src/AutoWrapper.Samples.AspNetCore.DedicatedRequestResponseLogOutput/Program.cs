@@ -18,7 +18,7 @@ namespace AutoWrapper.Samples.AspNetCore.DedicatedRequestResponseLogOutput
 
         private static void ConfigureLogger(LoggerConfiguration logConfig)
         {
-            logConfig.WriteTo.File(new RenderedCompactJsonFormatter(), "App_Data/Logs/log_default.json");
+            logConfig.WriteTo.File(new CompactJsonFormatter(), "App_Data/Logs/log_default.json");
         }
     }
 }

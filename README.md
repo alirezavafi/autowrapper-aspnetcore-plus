@@ -9,6 +9,7 @@ A modified version of AutoWrapper.Core with following changes:
 - Sets Log level based on response Status Code (Information=200, Warning>=400, Error>=500)
 - Masking sensitive information
 - Allow request/response size limit on capturing data
+- Allow request/response header capture
 - Allow dedicated logger for separating AutoWrapper logs
 
 # Sample Log Entry
@@ -70,6 +71,24 @@ A modified version of AutoWrapper.Core with following changes:
                     "token": "*** MASKED ***",
                     "summary": "Chilly"
                 }
+            ],
+            "Header":  [
+              {
+                "Name": "Date",
+                "Value": "Fri, 05 Mar 2021 12:03:08 GMT"
+              },
+              {
+                "Name": "Content-Type",
+                "Value": "application/json"
+              },
+              {
+                "Name": "Server",
+                "Value": "Kestrel"
+              },
+              {
+                "Name": "Content-Length",
+                "Value": "801"
+              }
             ]
         }
     },
@@ -109,15 +128,18 @@ var dedicatedOptionalAutoWrapperLogger = new LoggerConfiguration()
 app.UseApiResponseAndExceptionWrapper(new AutoWrapperOptions()
 {
     EnableResponseLogging = true, //default: true
+    ShouldLogRequestHeader = true, //default: true
     ShouldLogRequestData = true, //default: true
-    ShouldLogResponseData = true, //default: false
-    EnableExceptionLogging = true, //default: true
+    LogRequestHeaderOnException = true, //default: true
     LogRequestDataOnException = true, //default: true
+    ShouldLogResponseHeader = true, //default: false
+    ShouldLogResponseData = true, //default: false
+    LogResponseHeaderOnException = true, //default: true
     LogResponseDataOnException = true, //default: true
+    EnableExceptionLogging = true, //default: true
     UseApiProblemDetailsException = true, //default: false
     RequestBodyTextLengthLogLimit = 5000, //default: 4000
-    ResponseBodyTextLengthLogLimit = 5000, //default: 4000
-    MaskFormat = "***",  //default: "*** MASKED ***"
+    ResponseBodyTextLengthLogLimit = 5000, //default: 4000    MaskFormat = "***",  //default: "*** MASKED ***"
     MaskedProperties = { "*password*", "*token*", "*client-secret*" }, 
                        //default: {"*password*", "*token*", "*clientsecret*", "*bearer*", "*authorization*", "*client-secret*","*otp"};
     Logger = dedicatedOptionalAutoWrapperLogger, //if not specified uses default logger (Serilog.Log.Logger)

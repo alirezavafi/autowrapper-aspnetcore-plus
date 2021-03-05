@@ -44,19 +44,29 @@ namespace AutoWrapper.Samples.AspNetCore.DedicatedRequestResponseLogOutput
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
-            var autoWrapperLogger = new LoggerConfiguration()
+            var dedicatedOptionalAutoWrapperLogger = new LoggerConfiguration()
                 .SetSerilogPlusDefaultConfiguration()
                 .WriteTo.File(new RenderedCompactJsonFormatter(),"App_Data/Logs/log_autowrapper.json")
                 .CreateLogger();
             
             app.UseApiResponseAndExceptionWrapper(new AutoWrapperOptions()
             {
-                EnableExceptionLogging = true,
-                EnableResponseLogging = true,
-                ShouldLogRequestData = true,
-                ShouldLogResponseData = true,
-                UseApiProblemDetailsException = true,
-                Logger = autoWrapperLogger,
+                EnableResponseLogging = true, //default: true
+                ShouldLogRequestHeader = true, //default: true
+                ShouldLogRequestData = true, //default: true
+                LogRequestHeaderOnException = true, //default: true
+                LogRequestDataOnException = true, //default: true
+                ShouldLogResponseHeader = true, //default: false
+                ShouldLogResponseData = true, //default: false
+                LogResponseHeaderOnException = true, //default: true
+                LogResponseDataOnException = true, //default: true
+                EnableExceptionLogging = true, //default: true
+                UseApiProblemDetailsException = true, //default: false
+                RequestBodyTextLengthLogLimit = 5000, //default: 4000
+                ResponseBodyTextLengthLogLimit = 5000, //default: 4000
+                MaskFormat = "***",  //default: "*** MASKED ***"
+                MaskedProperties = { "*password*", "*token*", "*clientsecret*", "*authorization*", "*client-secret*" }, 
+                Logger = dedicatedOptionalAutoWrapperLogger, //if not specified uses default logger (Serilog.Log.Logger)
             });
             
             app.UseRouting();
