@@ -100,6 +100,31 @@ using AutoWrapper;
 ```csharp
 app.UseApiResponseAndExceptionWrapper();
 ```
+or
+
+```csharp
+var dedicatedOptionalAutoWrapperLogger = new LoggerConfiguration()
+                .WriteTo.File(new RenderedCompactJsonFormatter(),"App_Data/Logs/log_autowrapper.json")
+                .CreateLogger();
+            
+app.UseApiResponseAndExceptionWrapper(new AutoWrapperOptions()
+{
+    EnableResponseLogging = true, //default: true
+    ShouldLogRequestData = true, //default: true
+    ShouldLogResponseData = true, //default: false
+    EnableExceptionLogging = true, //default: true
+    LogRequestDataOnException = true, //default: true
+    LogResponseDataOnException = true, //default: true
+    UseApiProblemDetailsException = true, //default: false
+    RequestBodyTextLengthLogLimit = 5000, //default: 4000
+    ResponseBodyTextLengthLogLimit = 5000, //default: 4000
+    MaskFormat = "***",  //default: "*** MASKED ***"
+    MaskedProperties = { "*password*", "*token*", "*clientsecret*", "*bearer*", "*authorization*", "*client-secret*" }, 
+                       //{"*password*", "*token*", "*clientsecret*", "*bearer*", "*authorization*", "*client-secret*","*otp"};
+    Logger = dedicatedOptionalAutoWrapperLogger, //if not specified uses default logger (Serilog.Log.Logger)
+});
+```
+
 That's simple! Here’s how the response is going to look like for the default ASP.NET Core API template “`WeatherForecastController`” API:
 
 ```json
