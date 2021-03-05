@@ -82,6 +82,8 @@ A modified version of AutoWrapper.Core with following changes:
 }
 ```
 # Installation
+0. Configure Serilog
+
 1. Download and Install the latest `AutoWrapper.Core.Plus.Serilog` from NuGet or via CLI:
 
 ```
