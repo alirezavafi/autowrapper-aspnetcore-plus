@@ -82,10 +82,10 @@ A modified version of AutoWrapper.Core with following changes:
 }
 ```
 # Installation
-1. Download and Install the latest `AutoWrapper.Core` from NuGet or via CLI:
+1. Download and Install the latest `AutoWrapper.Core.Plus.Serilog` from NuGet or via CLI:
 
 ```
-PM> Install-Package AutoWrapper.Core.Plus.Serilog -Version 4.4.0
+PM> Install-Package AutoWrapper.Core.Plus.Serilog 
 ```
 
 2. Declare the following namespace within `Startup.cs`
