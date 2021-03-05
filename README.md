@@ -3,12 +3,10 @@
 # AutoWrapper.Plus.Serilog  [![Nuget](https://img.shields.io/nuget/v/AutoWrapper.Core.Plus.Serilog?color=blue)](https://www.nuget.org/packages/AutoWrapper.Core) 
 
 A modified version of AutoWrapper.Core with following changes:
-- Structured Logging using Serilog
-- Log Request and Response bodies in structured format
-  (LogResponseDataOnException and ShouldLogResponseData options added)
-- Log All Requests
-- Attach exceptions on request logs (removed separate log entry for exceptions)
-- Log level based on response Status Code (Information=200, Warning>=400, Error>=500)
+- Structured Request and Response Logging using Serilog
+- Allow configuring log all requests or problematic requests only (LogResponseDataOnException and ShouldLogResponseData options added)
+- Unified exception logs with request log entries (removed separate log entry for exceptions)
+- Sets Log level based on response Status Code (Information=200, Warning>=400, Error>=500)
 - Masking sensitive information
 - Allow request/response size limit on capturing data
 - Allow dedicated logger for separating AutoWrapper logs
