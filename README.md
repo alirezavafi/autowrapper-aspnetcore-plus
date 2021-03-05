@@ -119,7 +119,7 @@ app.UseApiResponseAndExceptionWrapper(new AutoWrapperOptions()
     RequestBodyTextLengthLogLimit = 5000, //default: 4000
     ResponseBodyTextLengthLogLimit = 5000, //default: 4000
     MaskFormat = "***",  //default: "*** MASKED ***"
-    MaskedProperties = { "*password*", "*token*", "*clientsecret*", "*bearer*", "*authorization*", "*client-secret*" }, 
+    MaskedProperties = { "*password*", "*token*", "*client-secret*" }, 
                        //default: {"*password*", "*token*", "*clientsecret*", "*bearer*", "*authorization*", "*client-secret*","*otp"};
     Logger = dedicatedOptionalAutoWrapperLogger, //if not specified uses default logger (Serilog.Log.Logger)
 });
