@@ -99,10 +99,9 @@ using AutoWrapper;
 
 ```csharp
 app.UseApiResponseAndExceptionWrapper();
-```
-or
 
-```csharp
+// or
+
 var dedicatedOptionalAutoWrapperLogger = new LoggerConfiguration()
                 .WriteTo.File(new RenderedCompactJsonFormatter(),"App_Data/Logs/log_autowrapper.json")
                 .CreateLogger();
