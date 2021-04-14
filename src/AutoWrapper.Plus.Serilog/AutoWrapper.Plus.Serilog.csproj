@@ -13,11 +13,12 @@
     <PackageReleaseNotes>See project repo for release notes.</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageId>AutoWrapper.Core.Plus.Serilog</PackageId>
+    <PackageId>AutoWrapper.AspNetCore.Plus</PackageId>
     <PackageIcon>icon.png</PackageIcon>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <RootNamespace>AutoWrapper</RootNamespace>
-    <PackageVersion>4.4.2.2</PackageVersion>
+    <PackageVersion>4.4</PackageVersion>
+    <AssemblyName>AutoWrapper.AspNetCore.Plus</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
