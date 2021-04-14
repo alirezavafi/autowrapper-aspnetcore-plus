@@ -1,6 +1,4 @@
-<img align="right" src="/src/AutoWrapper/logo.png" />
-
-# AutoWrapper.Plus.Serilog  [![Nuget](https://img.shields.io/nuget/v/AutoWrapper.Core.Plus.Serilog?color=blue)](https://www.nuget.org/packages/AutoWrapper.Core) 
+# AutoWrapper.Plus.Serilog  [![Nuget](https://img.shields.io/nuget/v/AutoWrapper.Core.Plus.Serilog?color=blue)](https://www.nuget.org/packages/AutoWrapper.Core.Plus.Serilog) 
 
 A modified version of AutoWrapper.Core with following changes:
 - Structured Request and Response Logging using Serilog
