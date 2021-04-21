@@ -28,5 +28,6 @@ namespace AutoWrapper
         public int ResponseBodyTextLengthLogLimit { get; set; } = 4000;
         public int RequestBodyTextLengthLogLimit { get; set; } = 4000;
         public ILogger Logger { get; set; }
+        public IEnumerable<AutoWrapperExcludePath>  ExcludePaths { get; set; } = null;
     }
 }

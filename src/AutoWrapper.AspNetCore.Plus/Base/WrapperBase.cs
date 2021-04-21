@@ -40,7 +40,7 @@ namespace AutoWrapper.Base
 
         public virtual async Task InvokeAsyncBase(HttpContext context, AutoWrapperMembers awm)
         {
-            if (awm.IsSwagger(context, _options.SwaggerPath) || !awm.IsApi(context))
+            if (awm.IsSwagger(context, _options.SwaggerPath) || !awm.IsApi(context) || awm.IsExclude(context, _options.ExcludePaths))
                 await _next(context);
             else
             {
@@ -182,6 +182,11 @@ namespace AutoWrapper.Base
             Exception ex)
         {
             stopWatch.Stop();
+            var endpoint = context.GetEndpoint();
+            var shouldLogHttpRequest = !(endpoint?.Metadata?.GetMetadata<IgnoreLogHttpRequestResponseAttribute>() is object);
+            if (!shouldLogHttpRequest)
+                return;
+            
             if (_options.EnableResponseLogging || (!isRequestOk && _options.EnableExceptionLogging))
             {
                 bool shouldLogRequestData = ShouldLogRequestData(context);

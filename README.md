@@ -1,7 +1,7 @@
-# AutoWrapper.Plus.Serilog  [![Nuget](https://img.shields.io/nuget/v/AutoWrapper.Core.Plus.Serilog?color=blue)](https://www.nuget.org/packages/AutoWrapper.Core.Plus.Serilog) 
+# AutoWrapper.AspNetCore.Plus  [![Nuget](https://img.shields.io/nuget/v/AutoWrapper.AspNetCore.Plus?color=blue)](https://www.nuget.org/packages/AutoWrapper.AspNetCore.Plus) 
 
 A modified version of AutoWrapper.Core with following changes:
-- Structured Request and Response Logging using Serilog
+- Structured Request and Response Logging using Serilogd
 - Allow configuring log all requests or problematic requests only (LogResponseDataOnException and ShouldLogResponseData options added)
 - Unified exception logs with request log entries (removed separate log entry for exceptions)
 - Sets Log level based on response Status Code (Information=200, Warning>=400, Error>=500)
@@ -9,7 +9,7 @@ A modified version of AutoWrapper.Core with following changes:
 - Allow request/response size limit on capturing data
 - Allow request/response header capture
 - Allow dedicated logger for separating AutoWrapper logs
-
+- Attribute based request/response log exclusion on controller/action (IgnoreLogHttpRequestResponseAttribute)
 # Sample Log Entry
 
 ```json
@@ -101,10 +101,10 @@ A modified version of AutoWrapper.Core with following changes:
 # Installation
 0. Configure Serilog
 
-1. Download and Install the latest `AutoWrapper.Core.Plus.Serilog` from NuGet or via CLI:
+1. Download and Install the latest `AutoWrapper.AspNetCore.Plus` from NuGet or via CLI:
 
 ```
-PM> Install-Package AutoWrapper.Core.Plus.Serilog 
+PM> Install-Package AutoWrapper.AspNetCore.Plus 
 ```
 
 2. Declare the following namespace within `Startup.cs`

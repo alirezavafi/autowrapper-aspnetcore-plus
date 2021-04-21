@@ -7,12 +7,12 @@
 
     <ItemGroup>
 <!--        <PackageReference Include="AutoWrapper.Core.Plus.Serilog" Version="4.4.2.1"/>-->
-        <PackageReference Include="Serilog" Version="2.10.0"/>
-        <PackageReference Include="Serilog.AspNetCore.Plus" Version="3.4.2-alpha"/>
+        <PackageReference Include="Serilog" Version="2.10.0" />
+        <PackageReference Include="Serilog.AspNetCore.Plus" Version="3.4.2-alpha" />
     </ItemGroup>
 
-        <ItemGroup>
-            <ProjectReference Include="..\AutoWrapper.Plus.Serilog\AutoWrapper.Plus.Serilog.csproj"/>
-        </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\AutoWrapper.AspNetCore.Plus\AutoWrapper.AspNetCore.Plus.csproj" />
+    </ItemGroup>
 
 </Project>

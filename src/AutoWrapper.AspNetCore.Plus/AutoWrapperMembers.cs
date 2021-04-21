@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Serilog;
 using static Microsoft.AspNetCore.Http.StatusCodes;
@@ -204,6 +205,29 @@ namespace AutoWrapper
         {
             return context.Request.Path.StartsWithSegments(new PathString(swaggerPath));
         }
+        
+        public bool IsExclude(HttpContext context, IEnumerable<AutoWrapperExcludePath> excludePaths)
+        {
+            if (excludePaths == null || excludePaths.Count() == 0)
+            {
+                return false;
+            }
+
+            return excludePaths.Any(x =>
+            {
+                switch (x.ExcludeMode)
+                {
+                    default:
+                    case ExcludeMode.Strict:
+                        return context.Request.Path.Value == x.Path;
+                    case ExcludeMode.StartWith:
+                        return context.Request.Path.StartsWithSegments(new PathString(x.Path));
+                    case ExcludeMode.Regex:
+                        Regex regExclude = new Regex(x.Path);
+                        return regExclude.IsMatch(context.Request.Path.Value);
+                }
+            });
+        }
 
         public bool IsApi(HttpContext context)
         {
@@ -304,5 +328,4 @@ namespace AutoWrapper
 
         #endregion
     }
-
 }
