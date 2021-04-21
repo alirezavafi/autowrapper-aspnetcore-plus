@@ -142,6 +142,8 @@ namespace AutoWrapper.Base
                     {
                         await awm.HandleExceptionAsync(context, exception);
                     }
+                    responseBodyAsText = await awm.ReadResponseBodyStreamAsync(memoryStream);
+
 
                     await awm.RevertResponseBodyStreamAsync(memoryStream, originalResponseBodyStream);
                 }
@@ -234,10 +236,14 @@ namespace AutoWrapper.Base
                 if ((shouldLogResponseData || (!isRequestOk && _options.LogResponseDataOnException)))
                 {
                     try { responseBody = responseBody.MaskFields(_options.MaskedProperties.ToArray(), _options.MaskFormat); } catch (Exception) { }
-                    if (responseBody.Length > _options.ResponseBodyTextLengthLogLimit)
-                        responseBody = responseBody.Substring(0, _options.ResponseBodyTextLengthLogLimit);
-                    else
-                        try { responseBodyObject = System.Text.Json.JsonDocument.Parse(responseBody); } catch (Exception) { }
+
+                    if (responseBody != null)
+                    {
+                        if (responseBody.Length > _options.ResponseBodyTextLengthLogLimit)
+                            responseBody = responseBody.Substring(0, _options.ResponseBodyTextLengthLogLimit);
+                        else
+                            try { responseBodyObject = System.Text.Json.JsonDocument.Parse(responseBody); } catch (Exception) { }
+                    }
                 }
                 else
                 {
@@ -293,7 +299,6 @@ namespace AutoWrapper.Base
         {
             _logger.Warning(
                 "The response has already started, the AutoWrapper.Plus.Serilog middleware will not be executed.");
-            LogHttpRequest(context, requestBody, responseStream, stopWatch, isRequestOk, ex);
         }
     }
 }

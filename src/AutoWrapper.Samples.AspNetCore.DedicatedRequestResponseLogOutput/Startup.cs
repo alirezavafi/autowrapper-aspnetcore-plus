@@ -61,7 +61,7 @@ namespace AutoWrapper.Samples.AspNetCore.DedicatedRequestResponseLogOutput
                 LogResponseHeaderOnException = true, //default: true
                 LogResponseDataOnException = true, //default: true
                 EnableExceptionLogging = true, //default: true
-                UseApiProblemDetailsException = true, //default: false
+                UseApiProblemDetailsException = true, //default: false,
                 RequestBodyTextLengthLogLimit = 5000, //default: 4000
                 ResponseBodyTextLengthLogLimit = 5000, //default: 4000
                 MaskFormat = "***",  //default: "*** MASKED ***"
