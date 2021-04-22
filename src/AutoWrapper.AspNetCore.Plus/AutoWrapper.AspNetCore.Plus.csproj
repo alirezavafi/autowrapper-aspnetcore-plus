@@ -17,7 +17,7 @@
     <PackageIcon>icon.png</PackageIcon>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <RootNamespace>AutoWrapper</RootNamespace>
-    <PackageVersion>4.5</PackageVersion>
+    <PackageVersion>4.5.1</PackageVersion>
     <AssemblyName>AutoWrapper.AspNetCore.Plus</AssemblyName>
   </PropertyGroup>
 

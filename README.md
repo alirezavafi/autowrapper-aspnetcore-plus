@@ -9,7 +9,8 @@ A modified version of AutoWrapper.Core with following changes:
 - Allow request/response size limit on capturing data
 - Allow request/response header capture
 - Allow dedicated logger for separating AutoWrapper logs
-- Attribute based request/response log exclusion on controller/action (IgnoreLogHttpRequestResponseAttribute)
+- Attribute based request/response log exclusion on controller/action (IgnoreLogAttribute)
+- Allow to attach custom properties to request/response log entry (LogCustomPropertyAttribute)
 # Sample Log Entry
 
 ```json

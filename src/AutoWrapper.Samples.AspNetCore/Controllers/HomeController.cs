@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using AutoWrapper.Filters;
 using AutoWrapper.Wrappers;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,6 +9,7 @@ namespace AutoWrapper.Sample.AspNetCore.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [LogCustomProperty("TestControllerProperty", "TestControllerPropertyValue")]
     public class HomeController : ControllerBase
     {
         private static readonly string[] Summaries = new[]
@@ -16,6 +18,7 @@ namespace AutoWrapper.Sample.AspNetCore.Controllers
         };
 
         [HttpGet("error")]
+        [LogCustomProperty("TestProperty", "TestPropertyValue")]
         public WeatherForecast Error()
         {
             throw new InvalidOperationException("operation failed.");
@@ -49,6 +52,21 @@ namespace AutoWrapper.Sample.AspNetCore.Controllers
 
         [HttpGet("list")]
         public IEnumerable<WeatherForecast> Get()
+        {
+            var rng = new Random();
+            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
+                {
+                    Date = DateTime.Now.AddDays(index),
+                    PasswordNumber = rng.Next(-20, 55),
+                    Summary = Summaries[rng.Next(Summaries.Length)]
+                })
+                .ToArray();
+        }
+        
+        
+        [HttpGet("exclude")]
+        [IgnoreLog]
+        public IEnumerable<WeatherForecast> Exclude()
         {
             var rng = new Random();
             return Enumerable.Range(1, 5).Select(index => new WeatherForecast

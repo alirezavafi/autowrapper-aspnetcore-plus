@@ -183,7 +183,7 @@ namespace AutoWrapper.Base
         {
             stopWatch.Stop();
             var endpoint = context.GetEndpoint();
-            var shouldLogHttpRequest = !(endpoint?.Metadata?.GetMetadata<IgnoreLogHttpRequestResponseAttribute>() is object);
+            var shouldLogHttpRequest = !(endpoint?.Metadata?.GetMetadata<IgnoreLogAttribute>() is object);
             if (!shouldLogHttpRequest)
                 return;
             
@@ -286,10 +286,13 @@ namespace AutoWrapper.Base
                     level = LogEventLevel.Warning;
                 }
 
+                var props = endpoint.Metadata?.GetOrderedMetadata<LogCustomPropertyAttribute>()
+                    .ToDictionary(x => x.Name, x => x.Value);
                 _logger.Write(level, ex, DefaultRequestCompletionMessageTemplate, new
                 {
                     Request = requestData,
                     Response = responseData,
+                    Properties = props
                 });
             }
         }

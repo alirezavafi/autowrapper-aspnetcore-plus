@@ -2,7 +2,7 @@
 
 namespace AutoWrapper.Filters
 {
-    public class IgnoreLogHttpRequestResponseAttribute : Attribute
+    public class IgnoreLogAttribute : Attribute
     {
         
     }

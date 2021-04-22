@@ -10,6 +10,7 @@ namespace AutoWrapper.Samples.AspNetCore.DedicatedRequestResponseLogOutput.Contr
 {
     [ApiController]
     [Route("[controller]")]
+    [LogCustomProperty("TestControllerProperty", "TestControllerPropertyValue")]
     public class HomeController : ControllerBase
     {
         private readonly ILogger _logger;
@@ -33,6 +34,7 @@ namespace AutoWrapper.Samples.AspNetCore.DedicatedRequestResponseLogOutput.Contr
         }
       
         [HttpGet("bad-request")]
+        [LogCustomProperty("TestProperty", "TestPropertyValue")]
         public WeatherForecast BadRequest()
         {
             throw new ApiException("invalid data");
@@ -73,7 +75,7 @@ namespace AutoWrapper.Samples.AspNetCore.DedicatedRequestResponseLogOutput.Contr
         }
         
         [HttpGet("exclude")]
-        [IgnoreLogHttpRequestResponse]
+        [IgnoreLog]
         public IEnumerable<WeatherForecast> Exclude()
         {
             _logger.Information("returning data");
