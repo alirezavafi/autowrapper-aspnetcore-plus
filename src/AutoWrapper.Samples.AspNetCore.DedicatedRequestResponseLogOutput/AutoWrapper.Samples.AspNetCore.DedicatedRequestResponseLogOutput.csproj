@@ -15,4 +15,8 @@
       <ProjectReference Include="..\AutoWrapper.AspNetCore.Plus\AutoWrapper.AspNetCore.Plus.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="App_Data\Logs" />
+    </ItemGroup>
+
 </Project>

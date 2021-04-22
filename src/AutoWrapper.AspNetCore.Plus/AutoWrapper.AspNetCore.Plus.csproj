@@ -17,7 +17,7 @@
     <PackageIcon>icon.png</PackageIcon>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <RootNamespace>AutoWrapper</RootNamespace>
-    <PackageVersion>4.5.1</PackageVersion>
+    <PackageVersion>4.5.2</PackageVersion>
     <AssemblyName>AutoWrapper.AspNetCore.Plus</AssemblyName>
   </PropertyGroup>
 
@@ -37,6 +37,7 @@
 
   <ItemGroup>
     <PackageReference Include="Serilog" Version="2.10.0" />
+    <PackageReference Include="UAParser" Version="3.1.44" />
   </ItemGroup>
 
 </Project>

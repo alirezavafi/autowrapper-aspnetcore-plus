@@ -15,6 +15,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Serilog;
 using Serilog.Context;
+using Serilog.Debugging;
 using Serilog.Events;
 using static Microsoft.AspNetCore.Http.StatusCodes;
 using ILogger = Serilog.ILogger;
@@ -204,18 +205,67 @@ namespace AutoWrapper.Base
                 {
                     requestBody = null;
                 }
-                IEnumerable<object> requestHeader = null;
+                
+                var requestHeader = new Dictionary<string, object>();
                 if (_options.ShouldLogRequestHeader ||
                     (!isRequestOk && _options.LogRequestHeaderOnException))
                 {
-                    requestHeader =
-                        context.Request.Headers.Mask(_options.MaskedProperties.ToArray(), _options.MaskFormat)
-                            .Select(x => new
-                            {
-                                Name = x.Key,
-                                Value = x.Value.ToString()
-                            });
+                    try
+                    {
+                        var valuesByKey = context.Request.Headers.Mask(_options.MaskedProperties.ToArray(), _options.MaskFormat).GroupBy(x => x.Key);
+                        foreach (var item in valuesByKey)
+                        {
+                            if (item.Count() > 1)
+                                requestHeader.Add(item.Key, item.Select(x => x.Value.ToString()).ToArray());
+                            else
+                                requestHeader.Add(item.Key, item.First().Value.ToString());
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        SelfLog.WriteLine("Cannot parse response header");
+                    }    
                 }
+                
+                var userAgentDic = new Dictionary<string, string>();
+                if (context.Request.Headers.ContainsKey("User-Agent"))
+                {
+                    var userAgent = context.Request.Headers["User-Agent"].ToString();
+                    userAgentDic.Add("_Raw", userAgent);
+                    try
+                    {
+                        var uaParser = UAParser.Parser.GetDefault();
+                        var clientInfo = uaParser.Parse(userAgent);
+                        userAgentDic.Add("Browser", clientInfo.UA.Family);
+                        userAgentDic.Add("BrowserVersion", clientInfo.UA.Major + "." + clientInfo.UA.Minor);
+                        userAgentDic.Add("OperatingSystem", clientInfo.OS.Family);
+                        userAgentDic.Add("OperatingSystemVersion", clientInfo.OS.Major + "." + clientInfo.OS.Minor);
+                        userAgentDic.Add("Device", clientInfo.Device.Family);
+                        userAgentDic.Add("DeviceModel", clientInfo.Device.Model);
+                        userAgentDic.Add("DeviceManufacturer", clientInfo.Device.Brand);
+                    }
+                    catch (Exception)
+                    {
+                        SelfLog.WriteLine("Cannot parse user agent:" + userAgent);
+                    }
+                }
+
+                var requestQuery = new Dictionary<string, object>();
+                try
+                {
+                    var valuesByKey =context.Request.Query.GroupBy(x => x.Key);
+                    foreach (var item in valuesByKey)
+                    {
+                        if (item.Count() > 1)
+                            requestQuery.Add(item.Key, item.Select(x => x.Value.ToString()).ToArray());
+                        else
+                            requestQuery.Add(item.Key, item.First().Value.ToString());
+                    }
+                }
+                catch (Exception)
+                {
+                    SelfLog.WriteLine("Cannot parse query string");
+                }    
 
                 var requestData = new
                 {
@@ -225,16 +275,12 @@ namespace AutoWrapper.Base
                     Host = context.Request.Host.Value,
                     Path = context.Request.Path.Value,
                     QueryString = context.Request.QueryString.Value,
-                    Query = context.Request.Query.Select(x => new
-                    {
-                        Name = x.Key,
-                        Value = x.Value.ToString()
-                    }),
+                    Query = requestQuery,
                     BodyString = requestBody,
                     Body = requestBodyObject,
                     Header = requestHeader,
+                    UserAgent = userAgentDic,
                 };
-
 
                 bool shouldLogResponseData = ShouldLogResponseData(context);
                 object responseBodyObject = null;
@@ -254,17 +300,26 @@ namespace AutoWrapper.Base
                 {
                     responseBody = null;
                 }
-                IEnumerable<object> responseHeader = null;
+                
+                var responseHeader = new Dictionary<string, object>();
                 if (_options.ShouldLogResponseHeader ||
                     (!isRequestOk && _options.LogResponseHeaderOnException))
                 {
-                    responseHeader =
-                        context.Response.Headers.Mask(_options.MaskedProperties.ToArray(), _options.MaskFormat)
-                            .Select(x => new
-                            {
-                                Name = x.Key,
-                                Value = x.Value.ToString()
-                            });
+                    try
+                    {
+                        var valuesByKey = context.Response.Headers.Mask(_options.MaskedProperties.ToArray(), _options.MaskFormat).GroupBy(x => x.Key);
+                        foreach (var item in valuesByKey)
+                        {
+                            if (item.Count() > 1)
+                                responseHeader.Add(item.Key, item.Select(x => x.Value.ToString()).ToArray());
+                            else
+                                responseHeader.Add(item.Key, item.First().Value.ToString());
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        SelfLog.WriteLine("Cannot parse response header");
+                    }    
                 }
 
                 var responseData = new
