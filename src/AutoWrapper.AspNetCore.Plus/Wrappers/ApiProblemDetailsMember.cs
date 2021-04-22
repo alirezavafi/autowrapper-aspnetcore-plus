@@ -16,7 +16,7 @@ namespace AutoWrapper.Wrappers
     {
         private static readonly RouteData _emptyRouteData = new RouteData();
         private static readonly ActionDescriptor _emptyActionDescriptor = new ActionDescriptor();
-        public Task WriteProblemDetailsAsync(HttpContext context, IActionResultExecutor<ObjectResult> executor, object body, Exception exception, bool isDebug = false)
+        public async Task<(int StatusCode, string Message)> WriteProblemDetailsAsync(HttpContext context, IActionResultExecutor<ObjectResult> executor, object body, Exception exception, bool isDebug = false)
         {
             var statusCode = context.Response.StatusCode;
             object details = exception == null ? DelegateResponse(body, statusCode) : GetProblemDetails(exception, isDebug);
@@ -35,8 +35,9 @@ namespace AutoWrapper.Wrappers
 
             result.ContentTypes.Add(TypeIdentifier.ProblemJSONHttpContentMediaType);
             result.ContentTypes.Add(TypeIdentifier.ProblemXMLHttpContentMediaType);
+            await executor.ExecuteAsync(actionContext, result);
 
-            return executor.ExecuteAsync(actionContext, result);
+            return (result.StatusCode.GetValueOrDefault(), JsonConvert.SerializeObject(result.Value));
         }
 
         private object DelegateResponse(object body, int statusCode)

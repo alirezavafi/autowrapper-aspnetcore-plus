@@ -17,6 +17,8 @@ using Serilog;
 using Serilog.Context;
 using Serilog.Debugging;
 using Serilog.Events;
+using Serilog.Extensions.Hosting;
+using Serilog.Parsing;
 using static Microsoft.AspNetCore.Http.StatusCodes;
 using ILogger = Serilog.ILogger;
 
@@ -25,16 +27,21 @@ namespace AutoWrapper.Base
     internal abstract class WrapperBase
     {
         private readonly RequestDelegate _next;
+        private readonly DiagnosticContext _diagnosticContext;
         private readonly AutoWrapperOptions _options;
         private readonly ILogger _logger;
+        readonly MessageTemplate _messageTemplate;
+        static readonly LogEventProperty[] NoProperties = new LogEventProperty[0];
         private IActionResultExecutor<ObjectResult> _executor { get; }
 
-        public WrapperBase(RequestDelegate next,
+        public WrapperBase(RequestDelegate next, DiagnosticContext diagnosticContext,
             AutoWrapperOptions options,
             IActionResultExecutor<ObjectResult> executor)
         {
             _next = next;
+            _diagnosticContext = diagnosticContext;
             _options = options;
+            _messageTemplate = new MessageTemplateParser().Parse(DefaultRequestCompletionMessageTemplate);
             _logger =  options.Logger ?? Log.ForContext<WrapperBase>();
             _executor = executor;
         }
@@ -45,6 +52,8 @@ namespace AutoWrapper.Base
                 await _next(context);
             else
             {
+                (int statusCode, string response) finalResponse = (context.Response.StatusCode, string.Empty);
+                var collector = _diagnosticContext.BeginCollection();
                 var stopWatch = Stopwatch.StartNew();
                 var requestBody = await awm.GetRequestBodyAsync(context.Request);
                 Exception ex = null;
@@ -108,7 +117,7 @@ namespace AutoWrapper.Base
                             }
                             else
                             {
-                                await awm.HandleSuccessfulRequestAsync(context, responseBodyAsText,
+                               finalResponse = await awm.HandleSuccessfulRequestAsync(context, responseBodyAsText,
                                     context.Response.StatusCode);
                             }
                         }
@@ -116,11 +125,11 @@ namespace AutoWrapper.Base
                         {
                             if (_options.UseApiProblemDetailsException)
                             {
-                                await awm.HandleProblemDetailsExceptionAsync(context, _executor, responseBodyAsText);
+                                finalResponse = await awm.HandleProblemDetailsExceptionAsync(context, _executor, responseBodyAsText);
                                 return;
                             }
 
-                            await awm.HandleUnsuccessfulRequestAsync(context, responseBodyAsText,
+                            finalResponse = await awm.HandleUnsuccessfulRequestAsync(context, responseBodyAsText,
                                 context.Response.StatusCode);
                         }
                     }
@@ -137,20 +146,20 @@ namespace AutoWrapper.Base
 
                     if (_options.UseApiProblemDetailsException)
                     {
-                        await awm.HandleProblemDetailsExceptionAsync(context, _executor, null, exception);
+                        finalResponse = await awm.HandleProblemDetailsExceptionAsync(context, _executor, null, exception);
                     }
                     else
                     {
-                        await awm.HandleExceptionAsync(context, exception);
+                        finalResponse = await awm.HandleExceptionAsync(context, exception);
                     }
-                    responseBodyAsText = await awm.ReadResponseBodyStreamAsync(memoryStream);
 
+                    responseBodyAsText = await awm.ReadResponseBodyStreamAsync(memoryStream);
 
                     await awm.RevertResponseBodyStreamAsync(memoryStream, originalResponseBodyStream);
                 }
                 finally
                 {
-                    LogHttpRequest(context, requestBody, responseBodyAsText, stopWatch, isRequestOk, ex);
+                    LogHttpRequest(context, collector, requestBody, finalResponse.response ?? responseBodyAsText, finalResponse.statusCode, stopWatch, isRequestOk, ex);
                 }
             }
         }
@@ -178,7 +187,7 @@ namespace AutoWrapper.Base
         }
 
         
-        private void LogHttpRequest(HttpContext context, string requestBody, string responseBody, Stopwatch stopWatch,
+        private void LogHttpRequest(HttpContext context, DiagnosticContextCollector collector, string requestBody, string finalResponseBody, int finalStatusCode, Stopwatch stopWatch,
             bool isRequestOk,
             Exception ex)
         {
@@ -286,19 +295,19 @@ namespace AutoWrapper.Base
                 object responseBodyObject = null;
                 if ((shouldLogResponseData || (!isRequestOk && _options.LogResponseDataOnException)))
                 {
-                    try { responseBody = responseBody.MaskFields(_options.MaskedProperties.ToArray(), _options.MaskFormat); } catch (Exception) { }
+                    try { finalResponseBody = finalResponseBody.MaskFields(_options.MaskedProperties.ToArray(), _options.MaskFormat); } catch (Exception) { }
 
-                    if (responseBody != null)
+                    if (finalResponseBody != null)
                     {
-                        if (responseBody.Length > _options.ResponseBodyTextLengthLogLimit)
-                            responseBody = responseBody.Substring(0, _options.ResponseBodyTextLengthLogLimit);
+                        if (finalResponseBody.Length > _options.ResponseBodyTextLengthLogLimit)
+                            finalResponseBody = finalResponseBody.Substring(0, _options.ResponseBodyTextLengthLogLimit);
                         else
-                            try { responseBodyObject = System.Text.Json.JsonDocument.Parse(responseBody); } catch (Exception) { }
+                            try { responseBodyObject = System.Text.Json.JsonDocument.Parse(finalResponseBody); } catch (Exception) { }
                     }
                 }
                 else
                 {
-                    responseBody = null;
+                    finalResponseBody = null;
                 }
                 
                 var responseHeader = new Dictionary<string, object>();
@@ -324,36 +333,40 @@ namespace AutoWrapper.Base
 
                 var responseData = new
                 {
-                    context.Response.StatusCode,
+                    StatusCode = finalStatusCode,
                     stopWatch.ElapsedMilliseconds,
-                    BodyString = responseBody,
+                    BodyString = finalResponseBody,
                     Body = responseBodyObject,
                     Header = responseHeader
                 };
 
                 var level = LogEventLevel.Information;
-                if (context.Response.StatusCode >= 500)
+                if (finalStatusCode >= 500)
                 {
                     level = LogEventLevel.Error;
                 }
-                else if (context.Response.StatusCode >= 400)
+                else if (finalStatusCode >= 400)
                 {
                     level = LogEventLevel.Warning;
                 }
 
-                var props = endpoint.Metadata?.GetOrderedMetadata<LogCustomPropertyAttribute>()
+                var props = endpoint?.Metadata?.GetOrderedMetadata<LogCustomPropertyAttribute>()?
                     .ToDictionary(x => x.Name, x => x.Value);
+
+                if (!collector.TryComplete(out var collectedProperties))
+                    collectedProperties = NoProperties;
                 _logger.Write(level, ex, DefaultRequestCompletionMessageTemplate, new
                 {
                     Request = requestData,
                     Response = responseData,
-                    Properties = props
+                    Properties = props,
+                    Context = collectedProperties.ToDictionary(x => x.Name, x => x.Value.ToString()),
                 });
             }
         }
 
         const string DefaultRequestCompletionMessageTemplate =
-            "HTTP Request Completed {@Context}";
+            "HttpRequest Completed with {@Data}";
 
 
         private void LogResponseHasStartedError(HttpContext context, string requestBody, string responseStream,

@@ -71,12 +71,12 @@ namespace AutoWrapper
             await bodyStream.CopyToAsync(orginalBodyStream);
         }
 
-        public async Task HandleExceptionAsync(HttpContext context, System.Exception exception)
+        public async Task<(int StatusCode, string Message)> HandleExceptionAsync(HttpContext context, System.Exception exception)
         {
             if (_options.UseCustomExceptionFormat)
             {
                 await WriteFormattedResponseToHttpContextAsync(context, context.Response.StatusCode, exception.GetBaseException().Message);
-                return;
+                return (context.Response.StatusCode, exception.GetBaseException().Message);
             }
 
             string exceptionMessage = default;
@@ -127,16 +127,17 @@ namespace AutoWrapper
             var jsonString = ConvertToJSONString(GetErrorResponse(httpStatusCode, apiError));
 
             await WriteFormattedResponseToHttpContextAsync(context, httpStatusCode, jsonString);
+            return (context.Response.StatusCode, jsonString);
         }
 
-        public async Task HandleUnsuccessfulRequestAsync(HttpContext context, object body, int httpStatusCode)
+        public async Task<(int StatusCode, string Message)> HandleUnsuccessfulRequestAsync(HttpContext context, object body, int httpStatusCode)
         {
             var (IsEncoded, ParsedText) = body.ToString().VerifyBodyContent();
 
             if (IsEncoded && _options.UseCustomExceptionFormat)
             {
                 await WriteFormattedResponseToHttpContextAsync(context, httpStatusCode, body.ToString());
-                return;
+                return (httpStatusCode, body.ToString());
             }
 
             var bodyText = IsEncoded ? JsonConvert.DeserializeObject<dynamic>(ParsedText) : body.ToString();
@@ -144,9 +145,10 @@ namespace AutoWrapper
 
             var jsonString = ConvertToJSONString(GetErrorResponse(httpStatusCode, apiError));
             await WriteFormattedResponseToHttpContextAsync(context, httpStatusCode, jsonString);
+            return (httpStatusCode, jsonString);
         }
 
-        public async Task HandleSuccessfulRequestAsync(HttpContext context, object body, int httpStatusCode)
+        public async Task<(int StatusCode, string Message)> HandleSuccessfulRequestAsync(HttpContext context, object body, int httpStatusCode)
         {
             var bodyText = !body.ToString().IsValidJson() ? ConvertToJSONString(body) : body.ToString();
 
@@ -192,6 +194,7 @@ namespace AutoWrapper
             }
 
             await WriteFormattedResponseToHttpContextAsync(context, httpStatusCode, jsonString);
+            return (httpStatusCode, jsonString);
         }
 
         public async Task HandleNotApiRequestAsync(HttpContext context)
@@ -247,9 +250,9 @@ namespace AutoWrapper
             await context.Response.WriteAsync(bodyText);
         }
 
-        public async Task HandleProblemDetailsExceptionAsync(HttpContext context, IActionResultExecutor<ObjectResult> executor, object body, Exception exception = null)
+        public Task<(int StatusCode, string Message)> HandleProblemDetailsExceptionAsync(HttpContext context, IActionResultExecutor<ObjectResult> executor, object body, Exception exception = null)
         {
-            await new ApiProblemDetailsMember().WriteProblemDetailsAsync(context, executor, body, exception, _options.IsDebug);
+            return new ApiProblemDetailsMember().WriteProblemDetailsAsync(context, executor, body, exception, _options.IsDebug);
         }
 
         public bool IsRequestSuccessful(int statusCode)

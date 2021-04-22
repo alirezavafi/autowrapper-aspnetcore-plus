@@ -14,21 +14,24 @@ namespace AutoWrapper.Samples.AspNetCore.DedicatedRequestResponseLogOutput.Contr
     public class HomeController : ControllerBase
     {
         private readonly ILogger _logger;
+        private readonly IDiagnosticContext _diagnosticContext;
 
         private static readonly string[] Summaries = new[]
         {
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
         };
 
-        public HomeController(ILogger logger)
+        public HomeController(ILogger logger, IDiagnosticContext diagnosticContext)
         {
             _logger = logger;
+            _diagnosticContext = diagnosticContext;
             _logger.Information("HomeController instantiated");
         }
 
         [HttpGet("error")]
         public WeatherForecast Error()
         {
+            _diagnosticContext.Set("DiagProp1", "Test Value");
             _logger.Error("Error occured");
             throw new InvalidOperationException("operation failed.");
         }
