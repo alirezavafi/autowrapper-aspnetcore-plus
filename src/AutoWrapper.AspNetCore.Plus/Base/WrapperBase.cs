@@ -159,7 +159,9 @@ namespace AutoWrapper.Base
                 }
                 finally
                 {
-                    LogHttpRequest(context, collector, requestBody, finalResponse.response ?? responseBodyAsText, finalResponse.statusCode, stopWatch, isRequestOk, ex);
+                    if (string.IsNullOrWhiteSpace(finalResponse.response))
+                        finalResponse.response = responseBodyAsText;
+                    LogHttpRequest(context, collector, requestBody, finalResponse.response, finalResponse.statusCode, stopWatch, isRequestOk, ex);
                 }
             }
         }
@@ -285,7 +287,7 @@ namespace AutoWrapper.Base
                     Path = context.Request.Path.Value,
                     QueryString = context.Request.QueryString.Value,
                     Query = requestQuery,
-                    BodyString = requestBody,
+                    BodyString = requestBody ?? string.Empty,
                     Body = requestBodyObject,
                     Header = requestHeader,
                     UserAgent = userAgentDic,
@@ -335,7 +337,7 @@ namespace AutoWrapper.Base
                 {
                     StatusCode = finalStatusCode,
                     stopWatch.ElapsedMilliseconds,
-                    BodyString = finalResponseBody,
+                    BodyString = finalResponseBody ?? string.Empty,
                     Body = responseBodyObject,
                     Header = responseHeader
                 };
