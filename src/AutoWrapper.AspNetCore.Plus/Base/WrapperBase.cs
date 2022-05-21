@@ -55,15 +55,24 @@ namespace AutoWrapper.Base
                 (int statusCode, string response) finalResponse = (context.Response.StatusCode, string.Empty);
                 var collector = _diagnosticContext.BeginCollection();
                 var stopWatch = Stopwatch.StartNew();
-                var requestBody = await awm.GetRequestBodyAsync(context.Request);
+                string requestBody = null;
+                try
+                {
+                    requestBody = await awm.GetRequestBodyAsync(context.Request);
+                }
+                catch (Exception e)
+                {
+                    _logger.Warning(e, "AutoWrapper cannot read request body due to exception");
+                }
                 Exception ex = null;
-                var originalResponseBodyStream = context.Response.Body;
+                Stream originalResponseBodyStream = null;
                 bool isRequestOk = false;
                 string responseBodyAsText = null;
                 using var memoryStream = new MemoryStream();
 
                 try
                 {
+                    originalResponseBodyStream = context.Response.Body;
                     context.Response.Body = memoryStream;
                     await _next.Invoke(context);
 
