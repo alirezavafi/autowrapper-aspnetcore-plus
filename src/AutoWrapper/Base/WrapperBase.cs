@@ -289,7 +289,7 @@ namespace AutoWrapper.Base
 
                 var requestData = new
                 {
-                    ClientIp = context.Connection.RemoteIpAddress.ToString(),
+                    ClientIp = context.GetClientIp().ToString(),
                     Method = context.Request.Method,
                     Scheme = context.Request.Scheme,
                     Host = context.Request.Host.Value,
