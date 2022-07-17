@@ -13,12 +13,11 @@
     <PackageReleaseNotes>See project repo for release notes.</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageId>AutoWrapper.AspNetCore.Plus</PackageId>
+    <PackageId>AutoWrapper</PackageId>
     <PackageIcon>icon.png</PackageIcon>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <RootNamespace>AutoWrapper</RootNamespace>
     <PackageVersion>4.5.5</PackageVersion>
-    <AssemblyName>AutoWrapper.AspNetCore.Plus</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
