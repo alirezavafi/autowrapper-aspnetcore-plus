@@ -2,7 +2,7 @@
 
 A modified version of AutoWrapper.Core with following changes:
 - Structured Request and Response Logging using Serilogd
-- Allow configuring log all requests or problematic requests only (LogResponseDataOnException and ShouldLogResponseData options added)
+- Allow configuring log all requests or problematic requests only 
 - Unified exception logs with request log entries (removed separate log entry for exceptions)
 - Sets Log level based on response Status Code (Information=200, Warning>=400, Error>=500)
 - Masking sensitive information
@@ -12,7 +12,7 @@ A modified version of AutoWrapper.Core with following changes:
 - Attribute based request/response log exclusion on controller/action (IgnoreLogAttribute)
 - Allow to attach custom properties to request/response log entry (LogCustomPropertyAttribute)
 
-NOTE: This project uses Serilog heavily to capture request/responses and dependes on "Serilog.AspNetCore.Plus" package. "Microsoft.Extensions.Logging" has missing some serilog features so this project does not project Microsoft Logging library.
+NOTE: This project uses Serilog heavily to capture request/responses and dependes on "Serilog.AspNetCore.Plus" package. "Microsoft.Extensions.Logging" has missing some serilog features so this project does not use Microsoft Logging library. But you can use AutoWrapper only for logging requests with Serilog and any logger for other application logs.
 
 # Sample Log Entry
 
@@ -103,8 +103,6 @@ NOTE: This project uses Serilog heavily to capture request/responses and depende
 }
 ```
 # Installation
-0. Configure Serilog
-
 1. Download and Install the latest `AutoWrapper.AspNetCore.Plus` from NuGet or via CLI:
 
 ```
