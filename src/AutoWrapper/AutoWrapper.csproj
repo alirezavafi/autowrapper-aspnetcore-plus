@@ -8,7 +8,7 @@
         <PackageProjectUrl>https://github.com/alirezavafi/auto-wrapper-plus-serilog</PackageProjectUrl>
         <RepositoryUrl>https://github.com/alirezavafi/auto-wrapper-plus-serilog</RepositoryUrl>
         <RepositoryType>Git</RepositoryType>
-        <Version>4.4.0</Version>
+        <Version>5.0.1</Version>
         <PackageTags>AutoWrapper, REST, API, WebAPI, ASP.NETCore, Middleware, HttpResponseWrapper, NETCore, C#, ApiResponseAndExceptionWrapper, APIWrapper, ResponseWrapper, ExceptionWrapper, ProblemDetails</PackageTags>
         <PackageReleaseNotes>See project repo for release notes.</PackageReleaseNotes>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -17,7 +17,7 @@
         <PackageIcon>icon.png</PackageIcon>
         <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
         <RootNamespace>AutoWrapper</RootNamespace>
-        <PackageVersion>5.0</PackageVersion>
+        <PackageVersion>5.0.1</PackageVersion>
     </PropertyGroup>
 
     <ItemGroup>

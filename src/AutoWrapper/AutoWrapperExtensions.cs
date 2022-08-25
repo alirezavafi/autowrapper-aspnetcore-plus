@@ -11,7 +11,7 @@ namespace AutoWrapper
 {
     public static class AutoWrapperExtensions
     {
-        public static IWebHostBuilder UseAutoWrapperPlus(this IWebHostBuilder host,
+        public static IHostBuilder UseAutoWrapperPlus(this IHostBuilder host,
             Action<AutoWrapperRegistrationOptions> optionsBuilder)
         {
             var op = new AutoWrapperRegistrationOptions();
@@ -20,6 +20,40 @@ namespace AutoWrapper
             return host;
         }
 
+        public static IHostBuilder UseAutoWrapperPlus(this IHostBuilder host,
+            AutoWrapperRegistrationOptions options = default)
+        {
+            options ??= new AutoWrapperRegistrationOptions();
+            var optionsAutoWrapperOptions = options.AutoWrapperOptions ?? new AutoWrapperOptions();
+            if (options.RegisterLoggerAsDefaultLogger)
+            {
+                host.UseSerilogPlus(options.LoggerConfiguration);
+            }
+            else
+            {
+                var loggerConfiguration = new LoggerConfiguration();
+                options.LoggerConfiguration?.Invoke(loggerConfiguration);
+                loggerConfiguration.SetSerilogPlusDefaultConfiguration();
+                optionsAutoWrapperOptions.Logger = loggerConfiguration.CreateLogger();
+            }
+            
+            host.ConfigureServices(s =>
+            {
+                s.AddTransient<IStartupFilter, AutoWrapperStartupFilter>();
+                s.AddSingleton(optionsAutoWrapperOptions);
+            });
+            return host;
+        }
+
+        public static IWebHostBuilder UseAutoWrapperPlus(this IWebHostBuilder host,
+            Action<AutoWrapperRegistrationOptions> optionsBuilder)
+        {
+            var op = new AutoWrapperRegistrationOptions();
+            optionsBuilder?.Invoke(op);
+            host.UseAutoWrapperPlus(op);
+            return host;
+        }
+        
         public static IWebHostBuilder UseAutoWrapperPlus(this IWebHostBuilder host,
             AutoWrapperRegistrationOptions options = default)
         {
@@ -79,5 +113,38 @@ namespace AutoWrapper
             return host;
         }
 
+        public static IHostBuilder UseAutoWrapperPlus<T>(this IHostBuilder host,
+            Action<AutoWrapperRegistrationOptions> optionsBuilder)
+        {
+            var op = new AutoWrapperRegistrationOptions();
+            optionsBuilder?.Invoke(op);
+            host.UseAutoWrapperPlus<T>(op);
+            return host;
+        }
+
+        public static IHostBuilder UseAutoWrapperPlus<T>(this IHostBuilder host,
+            AutoWrapperRegistrationOptions options = default)
+        {
+            options ??= new AutoWrapperRegistrationOptions();
+            var optionsAutoWrapperOptions = options.AutoWrapperOptions ?? new AutoWrapperOptions();
+            if (options.RegisterLoggerAsDefaultLogger)
+            {
+                host.UseSerilogPlus(options.LoggerConfiguration);
+            }
+            else
+            {
+                var loggerConfiguration = new LoggerConfiguration();
+                options.LoggerConfiguration?.Invoke(loggerConfiguration);
+                loggerConfiguration.SetSerilogPlusDefaultConfiguration();
+                optionsAutoWrapperOptions.Logger = loggerConfiguration.CreateLogger();
+            }
+            
+            host.ConfigureServices(s =>
+            {
+                s.AddTransient<IStartupFilter, AutoWrapperStartupFilter<T>>();
+                s.AddSingleton(optionsAutoWrapperOptions);
+            });
+            return host;
+        }
     }
 }
