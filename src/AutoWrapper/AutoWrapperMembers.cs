@@ -13,7 +13,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Serilog;
+using AutoWrapper.Models;
 using static Microsoft.AspNetCore.Http.StatusCodes;
 
 namespace AutoWrapper

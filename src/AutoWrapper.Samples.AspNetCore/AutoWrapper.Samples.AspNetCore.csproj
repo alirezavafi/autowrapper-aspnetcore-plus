@@ -1,17 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
-        <TargetFramework>net5.0</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <RootNamespace>AutoWrapper.Sample.AspNetCore</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
       <PackageReference Include="Serilog" Version="2.10.0" />
-      <PackageReference Include="Serilog.AspNetCore.Plus" Version="3.4.2-alpha" />
+      <PackageReference Include="Serilog.AspNetCore.Plus" Version="6.0.1" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\AutoWrapper\AutoWrapper.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="App_Data" />
     </ItemGroup>
 
 <!--    <ItemGroup>-->

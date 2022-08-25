@@ -1,4 +1,6 @@
-﻿namespace AutoWrapper
+﻿using AutoWrapper.Models;
+
+namespace AutoWrapper
 {
     public class AutoWrapperExcludePath
     {

@@ -26,9 +26,9 @@ namespace AutoWrapper.Test
         {
             var builder = new WebHostBuilder()
                  .ConfigureServices(services => { services.AddMvcCore(); })
+                 .UseAutoWrapperPlus()
                  .Configure(app =>
                 {
-                    app.UseApiResponseAndExceptionWrapper();
                     app.Run(context => Task.FromResult(0));
                 });
             var server = new TestServer(builder);
@@ -47,9 +47,9 @@ namespace AutoWrapper.Test
         {
             var builder = new WebHostBuilder()
                 .ConfigureServices(services => { services.AddMvcCore(); })
+                .UseAutoWrapperPlus()
                 .Configure(app =>
                 {
-                    app.UseApiResponseAndExceptionWrapper();
                     app.Run(context => context.Response.WriteAsync("HueiFeng"));
                 });
             var server = new TestServer(builder);
@@ -65,9 +65,9 @@ namespace AutoWrapper.Test
         {
             var builder = new WebHostBuilder()
             .ConfigureServices(services => { services.AddMvcCore(); })
+            .UseAutoWrapperPlus()
             .Configure(app =>
             {
-                app.UseApiResponseAndExceptionWrapper();
                 app.Run(context => context.Response.WriteAsync(
                     new ApiResponse("customMessage.", "Test", 200).ToJson()));
             });
@@ -87,10 +87,9 @@ namespace AutoWrapper.Test
             dictionary.AddModelError("name", "some error");
             var builder = new WebHostBuilder()
                 .ConfigureServices(services => { services.AddMvcCore(); })
+                .UseAutoWrapperPlus()
                 .Configure(app =>
                 {
-                    app.UseApiResponseAndExceptionWrapper();
-
                     app.Run(context => throw new ApiException(dictionary["name"]));
                 });
             Exception ex;
@@ -118,9 +117,9 @@ namespace AutoWrapper.Test
             dictionary.AddModelError("name", "some error");
             var builder = new WebHostBuilder()
                 .ConfigureServices(services => { services.AddMvcCore(); })
+                .UseAutoWrapperPlus()
                 .Configure(app =>
                 {
-                    app.UseApiResponseAndExceptionWrapper(new AutoWrapperOptions { UseApiProblemDetailsException = true });
                     app.Run(context => throw new ApiProblemDetailsException(dictionary));
                 });
             var server = new TestServer(builder);
@@ -137,9 +136,9 @@ namespace AutoWrapper.Test
         {
             var builder = new WebHostBuilder()
                 .ConfigureServices(services => { services.AddMvcCore(); })
+                .UseAutoWrapperPlus()
                 .Configure(app =>
                 {
-                    app.UseApiResponseAndExceptionWrapper();
                     app.Run(context => throw new ApiException("does not exist.", 404));
                 });
             var server = new TestServer(builder);
@@ -160,9 +159,9 @@ namespace AutoWrapper.Test
         {
             var builder = new WebHostBuilder()
                 .ConfigureServices(services => { services.AddMvcCore(); })
+                .UseAutoWrapperPlus()
                 .Configure(app =>
                 {
-                    app.UseApiResponseAndExceptionWrapper(new AutoWrapperOptions { UseApiProblemDetailsException = true });
                     app.Run(context => throw new ApiProblemDetailsException("does not exist.", 404));
                 });
             var server = new TestServer(builder);
@@ -186,9 +185,9 @@ namespace AutoWrapper.Test
                     });
                     services.AddMvcCore();
                 })
+                .UseAutoWrapperPlus<MapResponseObject>()
                 .Configure(app =>
                 {
-                    app.UseApiResponseAndExceptionWrapper<MapResponseObject>();
                     app.Run(context => context.Response.WriteAsync(
                         new ApiResponse("customMessage.", "Test", 200).ToJson()));
                 });
@@ -211,9 +210,9 @@ namespace AutoWrapper.Test
                 {
                     services.AddMvcCore();
                 })
+                .UseAutoWrapperPlus<MapResponseCustomErrorObject>()
                 .Configure(app =>
                 {
-                    app.UseApiResponseAndExceptionWrapper<MapResponseCustomErrorObject>();
                     app.Run(context =>
                  throw new ApiException(
                         new Error("An error blah.", "InvalidRange",
@@ -253,9 +252,9 @@ namespace AutoWrapper.Test
                 {
                     services.AddMvcCore();
                 })
+                .UseAutoWrapperPlus(new AutoWrapperRegistrationOptions() { AutoWrapperOptions = new AutoWrapperOptions() { UseCustomSchema = true } })
                 .Configure(app =>
                 {
-                    app.UseApiResponseAndExceptionWrapper(new AutoWrapperOptions { UseCustomSchema = true });
                     app.Run(context => context.Response.WriteAsync(new MyCustomApiResponse("Mr.A").ToJson()));
                 });
             var server = new TestServer(builder);

@@ -11,6 +11,9 @@ A modified version of AutoWrapper.Core with following changes:
 - Allow dedicated logger for separating AutoWrapper logs
 - Attribute based request/response log exclusion on controller/action (IgnoreLogAttribute)
 - Allow to attach custom properties to request/response log entry (LogCustomPropertyAttribute)
+
+NOTE: This project uses Serilog heavily to capture request/responses and dependes on "Serilog.AspNetCore.Plus" package. "Microsoft.Extensions.Logging" has missing some serilog features so this project does not project Microsoft Logging library.
+
 # Sample Log Entry
 
 ```json
@@ -113,36 +116,45 @@ PM> Install-Package AutoWrapper.AspNetCore.Plus
 ```csharp
 using AutoWrapper;
 ```
-3. Register the `middleware` below within the `Configure()` method of `Startup.cs` "before" the `UseRouting()` `middleware`:
+3. Register AutoWrapper in `CreateHostBuilder` method of `Program.cs`:
 
 ```csharp
-app.UseApiResponseAndExceptionWrapper();
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder
+                        .UseAutoWrapperPlus(new AutoWrapperRegistrationOptions()
+                        {
+                            RegisterLoggerAsDefaultLogger = true,
+                            LoggerConfiguration = ConfigureLogger,
+                            AutoWrapperOptions = new AutoWrapperOptions()
+                            {
+                                LogMode = LogMode.LogAll,
+                                RequestHeaderLogMode = LogMode.LogAll,
+                                RequestBodyLogMode = LogMode.LogAll,
+                                ResponseHeaderLogMode = LogMode.LogAll,
+                                ResponseBodyLogMode = LogMode.LogAll,
+                                UseApiProblemDetailsException = true
+                            }
+                        })
+                        .UseStartup<Startup>();
+                });
 
-// or
+        private static void ConfigureLogger(LoggerConfiguration logConfig)
+        {
+            logConfig
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+                .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+                .MinimumLevel.Override("System", LogEventLevel.Warning)
+                .WriteTo.File(new CompactJsonFormatter(), $"App_Data/Logs/log-{DateTime.Now:yyyyMMdd-HHmmss}.json")
+                .WriteTo.Console(
+                    outputTemplate:
+                    "[{Timestamp:HH:mm:ss} {Level:u3}] {Message} {NewLine}{Properties} {NewLine}{Exception}{NewLine}",
+                    theme: SystemConsoleTheme.Literate,
+                    restrictedToMinimumLevel: LogEventLevel.Information);
 
-var dedicatedOptionalAutoWrapperLogger = new LoggerConfiguration()
-                .WriteTo.File(new RenderedCompactJsonFormatter(),"App_Data/Logs/log_autowrapper.json")
-                .CreateLogger();
-            
-app.UseApiResponseAndExceptionWrapper(new AutoWrapperOptions()
-{
-    EnableResponseLogging = true, //default: true
-    ShouldLogRequestHeader = true, //default: true
-    ShouldLogRequestData = true, //default: true
-    LogRequestHeaderOnException = true, //default: true
-    LogRequestDataOnException = true, //default: true
-    ShouldLogResponseHeader = true, //default: false
-    ShouldLogResponseData = true, //default: false
-    LogResponseHeaderOnException = true, //default: true
-    LogResponseDataOnException = true, //default: true
-    EnableExceptionLogging = true, //default: true
-    UseApiProblemDetailsException = true, //default: false
-    RequestBodyTextLengthLogLimit = 5000, //default: 4000
-    ResponseBodyTextLengthLogLimit = 5000, //default: 4000    MaskFormat = "***",  //default: "*** MASKED ***"
-    MaskedProperties = { "*password*", "*token*", "*client-secret*" }, 
-                       //default: {"*password*", "*token*", "*clientsecret*", "*bearer*", "*authorization*", "*client-secret*","*otp"};
-    Logger = dedicatedOptionalAutoWrapperLogger, //if not specified uses default logger (Serilog.Log.Logger)
-});
+        }
 ```
 
 That's simple! Here’s how the response is going to look like for the default ASP.NET Core API template “`WeatherForecastController`” API:

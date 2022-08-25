@@ -1,4 +1,4 @@
-﻿namespace AutoWrapper
+﻿namespace AutoWrapper.Models
 {
     public enum ExcludeMode
     {

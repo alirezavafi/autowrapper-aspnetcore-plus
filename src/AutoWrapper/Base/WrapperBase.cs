@@ -11,8 +11,10 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AutoWrapper.Filters;
+using AutoWrapper.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
+using Newtonsoft.Json.Linq;
 using Serilog;
 using Serilog.Context;
 using Serilog.Debugging;
@@ -30,7 +32,6 @@ namespace AutoWrapper.Base
         private readonly DiagnosticContext _diagnosticContext;
         private readonly AutoWrapperOptions _options;
         private readonly ILogger _logger;
-        readonly MessageTemplate _messageTemplate;
         static readonly LogEventProperty[] NoProperties = new LogEventProperty[0];
         private IActionResultExecutor<ObjectResult> _executor { get; }
 
@@ -41,14 +42,14 @@ namespace AutoWrapper.Base
             _next = next;
             _diagnosticContext = diagnosticContext;
             _options = options;
-            _messageTemplate = new MessageTemplateParser().Parse(DefaultRequestCompletionMessageTemplate);
-            _logger =  options.Logger ?? Log.ForContext<WrapperBase>();
+            _logger = options.Logger ?? Log.ForContext<WrapperBase>();
             _executor = executor;
         }
 
         public virtual async Task InvokeAsyncBase(HttpContext context, AutoWrapperMembers awm)
         {
-            if (awm.IsSwagger(context, _options.SwaggerPath) || !awm.IsApi(context) || awm.IsExclude(context, _options.ExcludePaths))
+            if (awm.IsSwagger(context, _options.SwaggerPath) || !awm.IsApi(context) ||
+                awm.IsExclude(context, _options.ExcludePaths))
                 await _next(context);
             else
             {
@@ -64,6 +65,7 @@ namespace AutoWrapper.Base
                 {
                     _logger.Warning(e, "AutoWrapper cannot read request body due to exception");
                 }
+
                 Exception ex = null;
                 Stream originalResponseBodyStream = null;
                 bool isRequestOk = false;
@@ -79,7 +81,8 @@ namespace AutoWrapper.Base
                     isRequestOk = awm.IsRequestSuccessful(context.Response.StatusCode);
                     if (context.Response.HasStarted)
                     {
-                        LogResponseHasStartedError(context, requestBody, responseBodyAsText, stopWatch, isRequestOk, ex);
+                        LogResponseHasStartedError(context, requestBody, responseBodyAsText, stopWatch, isRequestOk,
+                            ex);
                         return;
                     }
 
@@ -126,7 +129,7 @@ namespace AutoWrapper.Base
                             }
                             else
                             {
-                               finalResponse = await awm.HandleSuccessfulRequestAsync(context, responseBodyAsText,
+                                finalResponse = await awm.HandleSuccessfulRequestAsync(context, responseBodyAsText,
                                     context.Response.StatusCode);
                             }
                         }
@@ -134,7 +137,9 @@ namespace AutoWrapper.Base
                         {
                             if (_options.UseApiProblemDetailsException)
                             {
-                                finalResponse = await awm.HandleProblemDetailsExceptionAsync(context, _executor, responseBodyAsText);
+                                finalResponse =
+                                    await awm.HandleProblemDetailsExceptionAsync(context, _executor,
+                                        responseBodyAsText);
                                 return;
                             }
 
@@ -155,7 +160,8 @@ namespace AutoWrapper.Base
 
                     if (_options.UseApiProblemDetailsException)
                     {
-                        finalResponse = await awm.HandleProblemDetailsExceptionAsync(context, _executor, null, exception);
+                        finalResponse =
+                            await awm.HandleProblemDetailsExceptionAsync(context, _executor, null, exception);
                     }
                     else
                     {
@@ -170,69 +176,81 @@ namespace AutoWrapper.Base
                 {
                     if (string.IsNullOrWhiteSpace(finalResponse.response))
                         finalResponse.response = responseBodyAsText;
-                    LogHttpRequest(context, collector, requestBody, finalResponse.response, finalResponse.statusCode, stopWatch, isRequestOk, ex);
+                    LogHttpRequest(context, collector, requestBody, finalResponse.response, finalResponse.statusCode,
+                        stopWatch, isRequestOk, ex);
                 }
             }
         }
 
         private bool ShouldLogRequestData(HttpContext context)
         {
-            if (_options.ShouldLogRequestData)
-            {
-                var endpoint = context.GetEndpoint();
-                return !(endpoint?.Metadata?.GetMetadata<RequestDataLogIgnoreAttribute>() is object);
-            }
-
-            return false;
+            var endpoint = context.GetEndpoint();
+            return !(endpoint?.Metadata?.GetMetadata<RequestDataLogIgnoreAttribute>() is object);
         }
 
         private bool ShouldLogResponseData(HttpContext context)
         {
-            if (_options.ShouldLogResponseData)
-            {
-                var endpoint = context.GetEndpoint();
-                return !(endpoint?.Metadata?.GetMetadata<ResponseDataLogIgnoreAttribute>() is object);
-            }
-
-            return false;
+            var endpoint = context.GetEndpoint();
+            return !(endpoint?.Metadata?.GetMetadata<ResponseDataLogIgnoreAttribute>() is object);
         }
 
-        
-        private void LogHttpRequest(HttpContext context, DiagnosticContextCollector collector, string requestBody, string finalResponseBody, int finalStatusCode, Stopwatch stopWatch,
+        private void LogHttpRequest(HttpContext context, DiagnosticContextCollector collector, string requestBody,
+            string finalResponseBody, int finalStatusCode, Stopwatch stopWatch,
             bool isRequestOk,
             Exception ex)
         {
             stopWatch.Stop();
+
+            if (_options.LogMode == LogMode.LogNone)
+                return;
+            if (isRequestOk && _options.LogMode != LogMode.LogAll)
+                return;
+            
+            var level = _options.GetLevel(context, stopWatch.ElapsedMilliseconds, ex);
             var endpoint = context.GetEndpoint();
             var shouldLogHttpRequest = !(endpoint?.Metadata?.GetMetadata<IgnoreLogAttribute>() is object);
             if (!shouldLogHttpRequest)
                 return;
+
+            object requestBodyObject = null;
+            var requestHeader = new Dictionary<string, object>();
+            var requestQuery = new Dictionary<string, object>();
+            var userAgentDic = new Dictionary<string, string>();
             
-            if (_options.EnableResponseLogging || (!isRequestOk && _options.EnableExceptionLogging))
+            if (_options.RequestBodyLogMode == LogMode.LogAll ||
+                (!isRequestOk && _options.RequestBodyLogMode == LogMode.LogFailures))
             {
                 bool shouldLogRequestData = ShouldLogRequestData(context);
-                JsonDocument requestBodyObject = null;
-                if ((shouldLogRequestData || (!isRequestOk && _options.LogResponseDataOnException)) &&
-                    !string.IsNullOrWhiteSpace(requestBody))
+                if (shouldLogRequestData)
                 {
-                    try { requestBody = requestBody.MaskFields(_options.MaskedProperties.ToArray(), _options.MaskFormat); } catch (Exception) { }
-                    if (requestBody.Length > _options.RequestBodyTextLengthLogLimit)
-                        requestBody = requestBody.Substring(0, _options.RequestBodyTextLengthLogLimit);
-                    else
-                        try { requestBodyObject = System.Text.Json.JsonDocument.Parse(requestBody); } catch (Exception) { }
+                    if (!string.IsNullOrWhiteSpace(requestBody))
+                    {
+                        JToken token;
+                        if (_options.LogRequestBodyAsStructuredObject && requestBody.TryGetJToken(out token))
+                        {
+                            var jToken = token.MaskFields(_options.MaskedProperties.ToArray(),
+                                _options.MaskFormat);
+                            requestBody = jToken.ToString();
+                            requestBodyObject = jToken;
+                        }
+
+                        if (requestBody.Length > _options.RequestBodyLogTextLengthLimit)
+                            requestBody = requestBody.Substring(0, _options.RequestBodyLogTextLengthLimit);
+                    }
                 }
                 else
                 {
-                    requestBody = null;
+                    requestBodyObject = null;
+                    requestBody = "(Not Logged)";
                 }
-                
-                var requestHeader = new Dictionary<string, object>();
-                if (_options.ShouldLogRequestHeader ||
-                    (!isRequestOk && _options.LogRequestHeaderOnException))
+
+                if (_options.RequestHeaderLogMode == LogMode.LogAll ||
+                    (!isRequestOk && _options.RequestHeaderLogMode == LogMode.LogFailures))
                 {
                     try
                     {
-                        var valuesByKey = context.Request.Headers.Mask(_options.MaskedProperties.ToArray(), _options.MaskFormat).GroupBy(x => x.Key);
+                        var valuesByKey = context.Request.Headers
+                            .Mask(_options.MaskedProperties.ToArray(), _options.MaskFormat).GroupBy(x => x.Key);
                         foreach (var item in valuesByKey)
                         {
                             if (item.Count() > 1)
@@ -244,10 +262,9 @@ namespace AutoWrapper.Base
                     catch (Exception)
                     {
                         SelfLog.WriteLine("Cannot parse response header");
-                    }    
+                    }
                 }
-                
-                var userAgentDic = new Dictionary<string, string>();
+
                 if (context.Request.Headers.ContainsKey("User-Agent"))
                 {
                     var userAgent = context.Request.Headers["User-Agent"].ToString();
@@ -270,10 +287,9 @@ namespace AutoWrapper.Base
                     }
                 }
 
-                var requestQuery = new Dictionary<string, object>();
                 try
                 {
-                    var valuesByKey =context.Request.Query.GroupBy(x => x.Key);
+                    var valuesByKey = context.Request.Query.GroupBy(x => x.Key);
                     foreach (var item in valuesByKey)
                     {
                         if (item.Count() > 1)
@@ -285,107 +301,125 @@ namespace AutoWrapper.Base
                 catch (Exception)
                 {
                     SelfLog.WriteLine("Cannot parse query string");
-                }    
+                }
+            }
+            else
+            {
+                requestBodyObject = null;
+                requestBody = "(Not Logged)";
+            }
 
-                var requestData = new
-                {
-                    ClientIp = context.GetClientIp().ToString(),
-                    Method = context.Request.Method,
-                    Scheme = context.Request.Scheme,
-                    Host = context.Request.Host.Value,
-                    Path = context.Request.Path.Value,
-                    QueryString = context.Request.QueryString.Value,
-                    Query = requestQuery,
-                    BodyString = requestBody ?? string.Empty,
-                    Body = requestBodyObject,
-                    Header = requestHeader,
-                    UserAgent = userAgentDic,
-                };
+            var requestData = new HttpRequestInfo()
+            {
+                ClientIp = context.GetClientIp().ToString(),
+                Method = context.Request.Method,
+                Scheme = context.Request.Scheme,
+                Host = context.Request.Host.Value,
+                Path = context.Request.Path.Value,
+                QueryString = context.Request.QueryString.Value,
+                Query = requestQuery,
+                BodyString = requestBody ?? string.Empty,
+                Body = requestBodyObject,
+                Headers = requestHeader,
+                UserAgent = userAgentDic,
+            };
 
+            object responseBodyObject = null;
+            if (_options.ResponseBodyLogMode == LogMode.LogAll ||
+                (!isRequestOk && _options.ResponseBodyLogMode == LogMode.LogFailures))
+            {
                 bool shouldLogResponseData = ShouldLogResponseData(context);
-                object responseBodyObject = null;
-                if ((shouldLogResponseData || (!isRequestOk && _options.LogResponseDataOnException)))
+                if (shouldLogResponseData)
                 {
-                    try { finalResponseBody = finalResponseBody.MaskFields(_options.MaskedProperties.ToArray(), _options.MaskFormat); } catch (Exception) { }
-
-                    if (finalResponseBody != null)
+                    if (!string.IsNullOrWhiteSpace(finalResponseBody))
                     {
-                        if (finalResponseBody.Length > _options.ResponseBodyTextLengthLogLimit)
-                            finalResponseBody = finalResponseBody.Substring(0, _options.ResponseBodyTextLengthLogLimit);
-                        else
-                            try { responseBodyObject = System.Text.Json.JsonDocument.Parse(finalResponseBody); } catch (Exception) { }
+                        JToken jToken;
+                        if (_options.LogResponseBodyAsStructuredObject && finalResponseBody.TryGetJToken(out jToken))
+                        {
+                            jToken = jToken.MaskFields(_options.MaskedProperties.ToArray(), _options.MaskFormat);
+                            finalResponseBody = jToken.ToString();
+                            responseBodyObject = jToken;
+                        }
+
+                        if (finalResponseBody.Length > _options.ResponseBodyLogTextLengthLimit)
+                        {
+                            finalResponseBody = finalResponseBody.Substring(0, _options.ResponseBodyLogTextLengthLimit);
+                        }
                     }
                 }
                 else
                 {
                     finalResponseBody = null;
+                    finalResponseBody = "(Not Logged)";
                 }
-                
-                var responseHeader = new Dictionary<string, object>();
-                if (_options.ShouldLogResponseHeader ||
-                    (!isRequestOk && _options.LogResponseHeaderOnException))
-                {
-                    try
-                    {
-                        var valuesByKey = context.Response.Headers.Mask(_options.MaskedProperties.ToArray(), _options.MaskFormat).GroupBy(x => x.Key);
-                        foreach (var item in valuesByKey)
-                        {
-                            if (item.Count() > 1)
-                                responseHeader.Add(item.Key, item.Select(x => x.Value.ToString()).ToArray());
-                            else
-                                responseHeader.Add(item.Key, item.First().Value.ToString());
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        SelfLog.WriteLine("Cannot parse response header");
-                    }    
-                }
-
-                var responseData = new
-                {
-                    StatusCode = finalStatusCode,
-                    stopWatch.ElapsedMilliseconds,
-                    BodyString = finalResponseBody ?? string.Empty,
-                    Body = responseBodyObject,
-                    Header = responseHeader
-                };
-
-                var level = LogEventLevel.Information;
-                if (finalStatusCode >= 500)
-                {
-                    level = LogEventLevel.Error;
-                }
-                else if (finalStatusCode >= 400)
-                {
-                    level = LogEventLevel.Warning;
-                }
-
-                var props = endpoint?.Metadata?.GetOrderedMetadata<LogCustomPropertyAttribute>()?
-                    .ToDictionary(x => x.Name, x => x.Value);
-
-                if (!collector.TryComplete(out var collectedProperties))
-                    collectedProperties = NoProperties;
-                _logger.Write(level, ex, DefaultRequestCompletionMessageTemplate, new
-                {
-                    Request = requestData,
-                    Response = responseData,
-                    Properties = props,
-                    Context = collectedProperties.ToDictionary(x => x.Name, x => x.Value.ToString()),
-                });
             }
+            else
+            {
+                finalResponseBody = null;
+                finalResponseBody = "(Not Logged)";
+            }
+
+            var responseHeader = new Dictionary<string, object>();
+            if (_options.ResponseHeaderLogMode == LogMode.LogAll ||
+                (!isRequestOk && _options.ResponseHeaderLogMode == LogMode.LogFailures))
+            {
+                try
+                {
+                    var valuesByKey = context.Response.Headers
+                        .Mask(_options.MaskedProperties.ToArray(), _options.MaskFormat);
+                    foreach (var item in valuesByKey)
+                    {
+                        if (item.Value.Count() > 1)
+                            responseHeader.Add(item.Key, item.Value);
+                        else
+                            responseHeader.Add(item.Key, item.Value.First());
+                    }
+                }
+                catch (Exception)
+                {
+                    SelfLog.WriteLine("Cannot parse response header");
+                }
+            }
+
+            var responseData = new HttpResponseInfo()
+            {
+                StatusCode = finalStatusCode,
+                ElapsedMilliseconds = stopWatch.ElapsedMilliseconds,
+                BodyString = finalResponseBody ?? string.Empty,
+                Body = responseBodyObject,
+                Headers = responseHeader
+            };
+        
+            var props = endpoint?.Metadata?.GetOrderedMetadata<LogCustomPropertyAttribute>()?
+                .ToDictionary(x => x.Name, x => x.Value);
+
+            if (!collector.TryComplete(out var collectedProperties))
+                collectedProperties = NoProperties;
+            var httpRequestContext = new HttpContextInfo
+            {
+                Request = requestData, 
+                Response = responseData, 
+                Properties = props,
+                Diagnostics = collectedProperties.ToDictionary(x => x.Name, x => x.Value.ToString())
+            };
+            
+            var messageOptions = _options.GetLogMessageAndProperties(httpRequestContext);
+            var contextLogger = _logger;
+            if (messageOptions.AdditionalProperties != null)
+            {
+                foreach (var p in messageOptions.AdditionalProperties)
+                {
+                    contextLogger = contextLogger.ForContext(p.Key, p.Value, true);
+                }
+            }
+            contextLogger.Write(level, ex, messageOptions.MessageTemplate, messageOptions.MessageParameters);
         }
-
-        const string DefaultRequestCompletionMessageTemplate =
-            "HttpRequest Completed with {@Data}";
-
-
+        
         private void LogResponseHasStartedError(HttpContext context, string requestBody, string responseStream,
             Stopwatch stopWatch,
             bool isRequestOk, Exception ex)
         {
-            _logger.Warning(
-                "The response has already started, the AutoWrapper.Plus.Serilog middleware will not be executed.");
+            _logger.Warning("The response has already started, the AutoWrapper.Plus middleware will not be executed.");
         }
     }
 }

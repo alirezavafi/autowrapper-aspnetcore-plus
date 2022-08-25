@@ -1,43 +1,54 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
- <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.0;netcoreapp3.1</TargetFrameworks>
-    <Authors>Alireza Vafi</Authors>
-    <Description>modified version of AutoWrapper.Core based on my experience     </Description>
-    <PackageLicenseUrl></PackageLicenseUrl>
-    <PackageProjectUrl>https://github.com/alirezavafi/auto-wrapper-plus-serilog</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/alirezavafi/auto-wrapper-plus-serilog</RepositoryUrl>
-    <RepositoryType>Git</RepositoryType>
-    <Version>4.4.0</Version>
-    <PackageTags>AutoWrapper, REST, API, WebAPI, ASP.NETCore, Middleware, HttpResponseWrapper, NETCore, C#, ApiResponseAndExceptionWrapper, APIWrapper, ResponseWrapper, ExceptionWrapper, ProblemDetails</PackageTags>
-    <PackageReleaseNotes>See project repo for release notes.</PackageReleaseNotes>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageId>AutoWrapper</PackageId>
-    <PackageIcon>icon.png</PackageIcon>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <RootNamespace>AutoWrapper</RootNamespace>
-    <PackageVersion>4.5.5</PackageVersion>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFrameworks>net5.0;net6.0;netcoreapp3.0;netcoreapp3.1</TargetFrameworks>
+        <Authors>Alireza Vafi</Authors>
+        <Description>modified version of AutoWrapper.Core based on my experience</Description>
+        <PackageLicenseUrl></PackageLicenseUrl>
+        <PackageProjectUrl>https://github.com/alirezavafi/auto-wrapper-plus-serilog</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/alirezavafi/auto-wrapper-plus-serilog</RepositoryUrl>
+        <RepositoryType>Git</RepositoryType>
+        <Version>4.4.0</Version>
+        <PackageTags>AutoWrapper, REST, API, WebAPI, ASP.NETCore, Middleware, HttpResponseWrapper, NETCore, C#, ApiResponseAndExceptionWrapper, APIWrapper, ResponseWrapper, ExceptionWrapper, ProblemDetails</PackageTags>
+        <PackageReleaseNotes>See project repo for release notes.</PackageReleaseNotes>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageId>AutoWrapper</PackageId>
+        <PackageIcon>icon.png</PackageIcon>
+        <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+        <RootNamespace>AutoWrapper</RootNamespace>
+        <PackageVersion>5.0</PackageVersion>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <None Include="icon.png" Pack="true" PackagePath="\" />
-  </ItemGroup>
+    <ItemGroup>
+        <None Include="icon.png" Pack="true" PackagePath="\" />
+    </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
-  </ItemGroup>
+    <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.0' ">
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-  </ItemGroup>
+    <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.0' ">
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Serilog" Version="2.10.0" />
-    <PackageReference Include="Serilog.Extensions.Hosting" Version="3.1.0" />
-    <PackageReference Include="UAParser" Version="3.1.44" />
-  </ItemGroup>
+    <ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    </ItemGroup>
+    
+    <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Serilog" Version="2.10.0" />
+        <PackageReference Include="Serilog.AspNetCore.Plus" Version="6.0.1" />
+        <PackageReference Include="Serilog.Extensions.Hosting" Version="5.0.1" />
+        <PackageReference Include="UAParser" Version="3.1.47" />
+    </ItemGroup>
 
 </Project>

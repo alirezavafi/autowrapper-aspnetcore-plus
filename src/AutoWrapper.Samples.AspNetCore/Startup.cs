@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoWrapper.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -35,23 +36,12 @@ namespace AutoWrapper.Sample.AspNetCore
             }
             else
             {
-                app.UseExceptionHandler("/Home/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
             
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
-            app.UseApiResponseAndExceptionWrapper(new AutoWrapperOptions()
-            {
-                EnableExceptionLogging = true,
-                EnableResponseLogging = true,
-                ShouldLogRequestData = true,
-                ShouldLogResponseData = true,
-                UseApiProblemDetailsException = true
-            });
-            
             app.UseRouting();
 
             app.UseAuthorization();

@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using AutoWrapper.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -36,38 +37,11 @@ namespace AutoWrapper.Samples.AspNetCore.DedicatedRequestResponseLogOutput
             }
             else
             {
-                app.UseExceptionHandler("/Home/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
             
             app.UseHttpsRedirection();
             app.UseStaticFiles();
-
-            var dedicatedOptionalAutoWrapperLogger = new LoggerConfiguration()
-                .SetSerilogPlusDefaultConfiguration()
-                .WriteTo.File(new RenderedCompactJsonFormatter(),"App_Data/Logs/log_autowrapper.json")
-                .CreateLogger();
-            
-            app.UseApiResponseAndExceptionWrapper(new AutoWrapperOptions()
-            {
-                EnableResponseLogging = true, //default: true
-                ShouldLogRequestHeader = true, //default: true
-                ShouldLogRequestData = true, //default: true
-                LogRequestHeaderOnException = true, //default: true
-                LogRequestDataOnException = true, //default: true
-                ShouldLogResponseHeader = true, //default: false
-                ShouldLogResponseData = true, //default: false
-                LogResponseHeaderOnException = true, //default: true
-                LogResponseDataOnException = true, //default: true
-                EnableExceptionLogging = true, //default: true
-                UseApiProblemDetailsException = true, //default: false,
-                RequestBodyTextLengthLogLimit = 5000, //default: 4000
-                ResponseBodyTextLengthLogLimit = 5000, //default: 4000
-                MaskFormat = "***",  //default: "*** MASKED ***"
-                MaskedProperties = { "*password*", "*token*", "*clientsecret*", "*authorization*", "*client-secret*" }, 
-                Logger = dedicatedOptionalAutoWrapperLogger, //if not specified uses default logger (Serilog.Log.Logger)
-            });
             
             app.UseRouting();
 

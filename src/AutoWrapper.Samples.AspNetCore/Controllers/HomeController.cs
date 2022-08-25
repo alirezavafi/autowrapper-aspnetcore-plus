@@ -25,16 +25,15 @@ namespace AutoWrapper.Sample.AspNetCore.Controllers
         }
       
         [HttpGet("bad-request")]
-        public WeatherForecast BadRequest()
+        public IActionResult BadRequest()
         {
-            throw new ApiException("invalid data");
+            return BadRequest("invalid data");
         }
-
         
         [HttpGet("unauthorized")]
         public WeatherForecast Unauthorized()
         {
-            throw new UnauthorizedAccessException();
+            throw new ApiProblemDetailsException("Unauthorized", 401);
         }
 
         [HttpGet("save")]
